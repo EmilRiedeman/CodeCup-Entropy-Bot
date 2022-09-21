@@ -1,0 +1,1 @@
+cpp-merge --output ../build/output.cpp ../source/main.cpp
