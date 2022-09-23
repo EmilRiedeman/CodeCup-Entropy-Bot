@@ -1,1 +1,1 @@
-cpp-merge --output ../build/output.cpp ../source/main.cpp
+cpp-merge --include ../include/entropy --output ../build/output.cpp ../source/main.cpp

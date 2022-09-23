@@ -1,6 +1,7 @@
-#include <iostream>
+#include "entropy/palindrome.hpp"
 
-int main(int argc, const char *args[]) {
-    //std::cout << "Hello, World!" << std::endl;
+int main(int, const char *[]) {
+    constexpr auto table = entropy::ScoreLookupTable<7>();
+
     return 0;
 }
