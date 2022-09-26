@@ -25,36 +25,25 @@ struct String {
 };
 
 template<uint C, uint N>
-constexpr bool is_palindrome(String<C> string, uint i, uint j, std::array<std::array<uint, N>, N> &dp) {
-    if (i > j) return true;
-
-    if (dp[i][j])
-        return dp[i][j] - 1;
-
-    if (string.read(i) != string.read(j)) {
-        dp[i][j] = 1;
-        return false;
+constexpr inline uint8_t count(String<C> string, int left, int right) {
+    uint8_t score = 0;
+    for (uint8_t a{}, b{}; left >= 0 && right < N; --left, ++right) {
+        a = string.read(left);
+        b = string.read(right);
+        if (a == b && a && b) score += uint8_t(right - left + 1);
+        else break;
     }
-
-    return (dp[i][j] = is_palindrome<C, N>(string, i + 1, j - 1, dp) + 1) - 1;
+    return score;
 }
 
 template<uint C, uint N>
-constexpr uint8_t score_string(String<C> string) {
-    std::array<std::array<uint, N>, N> dp{};
-    uint8_t ans = 0;
-
-    for (uint i = 0; i < N; ++i) {
-        if (!string.read(i)) continue;
-        break;
-        for (uint j = i + 1; j < N; ++j) {
-            if (!string.read(j)) break;
-            //bool b = is_palindrome<C, N>(string, i, j, dp);
-            ans += 1 * uint8_t(j - i + 1);
-        }
+constexpr inline uint8_t score_string(String<C> string) {
+    uint8_t score = 0;
+    for (int i = 0; i < N; ++i) {
+        if (string.read(i)) score += count<C, N>(string, i - 1, i + 1);
+        score += count<C, N>(string, i, i + 1);
     }
-
-    return ans;
+    return score;
 }
 
 template<uint C, uint N>
