@@ -9,7 +9,7 @@ namespace entropy {
 
 template<uint C>
 struct String {
-    static constexpr auto POWER_TABLE = generate_array<16>([](auto x, auto) { return int_pow<C>(x); });
+    static constexpr auto POWER_TABLE = generate_array<32>([](auto x, auto) { return int_pow<C>(x); });
 
     uint hash;
 
@@ -19,41 +19,77 @@ struct String {
         return (hash / POWER_TABLE[index]) % C;
     }
 
-    constexpr explicit operator uint() const {
+    constexpr String add_copy(uint i, uint c) {
+        return {hash + POWER_TABLE[i] * c};
+    }
+
+    constexpr operator uint() const {
         return hash;
+    }
+
+    template<uint N>
+    constexpr auto to_array() const {
+        std::array<uint, N> array{};
+        for (uint i = 0; i < N; ++i) array[i] = read(i);
+        return array;
+    }
+
+    template<uint N, typename T>
+    T &print(T &output) const {
+        for (auto &x : to_array<N>()) output << x;
+        return output;
     }
 };
 
-template<uint C, uint N>
-constexpr inline uint8_t count(String<C> string, int left, int right) {
+template<uint C>
+constexpr inline uint8_t count(String<C> string, uint left, uint right, const uint begin, const uint end) {
     uint8_t score = 0;
-    for (uint8_t a{}, b{}; left >= 0 && right < N; --left, ++right) {
-        a = string.read(left);
-        b = string.read(right);
-        if (a == b && a && b) score += uint8_t(right - left + 1);
+    for (; left + 1 > begin && right <= end; --left, ++right) {
+        if (string.read(left) == string.read(right)) score += uint8_t(right - left + 1);
         else break;
     }
     return score;
 }
 
-template<uint C, uint N>
-constexpr inline uint8_t score_string(String<C> string) {
+template<uint C>
+constexpr inline uint8_t score_string(String<C> string, const uint begin, const uint end) {
     uint8_t score = 0;
-    for (int i = 0; i < N; ++i) {
-        if (string.read(i)) score += count<C, N>(string, i - 1, i + 1);
-        score += count<C, N>(string, i, i + 1);
+    for (uint i = begin; i < end; ++i) {
+        score += count<C>(string, i - 1, i + 1, begin, end);
+        score += count<C>(string, i, i + 1, begin, end);
     }
     return score;
+}
+
+template<uint C, uint STOP, uint N>
+constexpr void compute_score_table(
+        std::array<std::uint8_t, N> &table,
+        String<C> cur_sequence={},
+        uint colours=1,
+        uint begin=0,
+        uint end=0,
+        uint prev_score=0
+                ) {
+    if (end >= STOP) return;
+    compute_score_table<C, STOP, N>(table, cur_sequence, colours, end + 1, end + 1, table[cur_sequence]);
+
+    for (uint c = 1; c < colours; ++c) {
+        auto next_seq = cur_sequence.add_copy(end, c);
+        table[next_seq] = score_string<C>(next_seq, begin, end) + prev_score;
+        compute_score_table<C, STOP, N>(table, next_seq, colours, begin, end + 1, prev_score);
+    }
+
+    if (colours >= C) return;
+    auto next_seq = cur_sequence.add_copy(end, colours);
+    table[next_seq] = table[cur_sequence];
+    compute_score_table<C, STOP, N>(table, next_seq, colours + 1, begin, end + 1, prev_score);
 }
 
 template<uint C, uint N>
 constexpr auto score_lookup_table() {
     std::array<std::uint8_t, LookupPow<uint>::calculate<C, N>> result{};
-    for (uint i = 0; i < result.size(); ++i) {
-        result[i] = score_string<C, N>({i});
-    }
+    compute_score_table<C, N, result.size()>(result);
     return result;
-    //return generate_array<>([](auto x, auto) { return score_palindrome<C, N>({x}); });
 }
 
 
