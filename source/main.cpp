@@ -1,16 +1,20 @@
-#include <iostream>
 #include "entropy/palindrome.hpp"
+
+#include <algorithm>
+#include <numeric>
+#include <iostream>
 
 using namespace entropy;
 
-int main(int, const char *[]) {
-    constexpr auto table = score_lookup_table<8, 7>();
-    std::cerr << (uint) table[9] << '\n';
+constexpr auto table = score_lookup_table<8, 7>();
+std::array<uint, table.size()> sorted{};
 
-    for (uint i = 0; i < table.size(); ++i) {
-        if (table[i]) {
-            (String<8>{i}).print<7>(std::cerr) << ": " << (uint)table[i] << '\n';
-        }
+int main(int, const char *[]) {
+    std::iota(sorted.begin(), sorted.end(), 0);
+    std::stable_sort(sorted.begin(), sorted.end(), [&](auto a, auto b){return table[a] > table[b];});
+
+    for (String<8> s : sorted) {
+        if (table[s]) s.print<7>(std::cerr) << ": " << (uint)table[s] << '\n';
     }
 
     return 0;

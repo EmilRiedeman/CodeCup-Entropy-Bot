@@ -14,6 +14,7 @@ struct String {
     uint hash;
 
     constexpr String() = default;
+    constexpr String(uint x): hash(x) {}
 
     [[nodiscard]] constexpr uint read(uint index) const {
         return (hash / POWER_TABLE[index]) % C;
