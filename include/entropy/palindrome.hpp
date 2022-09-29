@@ -37,7 +37,7 @@ struct String {
 
     template<uint N, typename T>
     T &print(T &output) const {
-        for (auto &x : to_array<N>()) output << x;
+        for (auto &x: to_array<N>()) output << x;
         return output;
     }
 };
@@ -65,12 +65,11 @@ constexpr inline uint8_t score_string(String<C> string, const uint begin, const 
 template<uint C, uint STOP, uint N>
 constexpr void compute_score_table(
         std::array<std::uint8_t, N> &table,
-        String<C> cur_sequence={},
-        uint colours=1,
-        uint begin=0,
-        uint end=0,
-        uint prev_score=0
-                ) {
+        String<C> cur_sequence = {},
+        uint colours = 1,
+        uint begin = 0,
+        uint end = 0,
+        uint prev_score = 0) {
     if (end >= STOP) return;
     compute_score_table<C, STOP, N>(table, cur_sequence, colours, end + 1, end + 1, table[cur_sequence]);
 
@@ -93,5 +92,4 @@ constexpr auto score_lookup_table() {
     return result;
 }
 
-
-}
+}// namespace entropy
