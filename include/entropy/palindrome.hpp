@@ -16,17 +16,13 @@ struct String {
     constexpr String() = default;
     constexpr String(uint x): hash(x) {}
 
-    [[nodiscard]] constexpr uint read(uint index) const {
-        return (hash / POWER_TABLE[index]) % C;
-    }
+    [[nodiscard]] constexpr uint read(uint index) const { return (hash / POWER_TABLE[index]) % C; }
 
-    constexpr String add_copy(uint i, uint c) {
-        return {hash + POWER_TABLE[i] * c};
-    }
+    constexpr String add_copy(uint i, uint c) const { return {hash + POWER_TABLE[i] * c}; }
 
-    constexpr operator uint() const {
-        return hash;
-    }
+    constexpr void add(uint i, uint c) { hash += POWER_TABLE[i] * c; }
+
+    constexpr operator uint() const { return hash; }
 
     template<uint N>
     constexpr auto to_array() const {
@@ -41,6 +37,19 @@ struct String {
         return output;
     }
 };
+
+template<typename ConstIterator, uint C, std::ptrdiff_t STEP>
+constexpr auto get_sorted_string(ConstIterator begin, uint N) {
+    uint translate[C]{1};
+    String<C> s{};
+    for (uint i = 0; i < N; ++i, begin += STEP) {
+        if (*begin) {
+            if (!translate[*begin]) translate[*begin] = translate[0]++;
+            s.add(i, translate[*begin]);
+        }
+    }
+    return s;
+}
 
 template<uint C>
 constexpr inline uint8_t count(String<C> string, uint left, uint right, const uint begin, const uint end) {
