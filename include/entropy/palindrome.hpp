@@ -38,7 +38,7 @@ struct String {
     }
 };
 
-template<typename ConstIterator, uint C, std::ptrdiff_t STEP>
+template<uint C, std::ptrdiff_t STEP, typename ConstIterator>
 constexpr auto get_sorted_string(ConstIterator begin, uint N) {
     uint translate[C]{1};
     String<C> s{};
