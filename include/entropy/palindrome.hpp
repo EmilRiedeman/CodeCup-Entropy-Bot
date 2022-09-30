@@ -30,12 +30,6 @@ struct String {
         for (uint i = 0; i < N; ++i) array[i] = read(i);
         return array;
     }
-
-    template<uint N, typename T>
-    T &print(T &output) const {
-        for (auto &x: to_array<N>()) output << x;
-        return output;
-    }
 };
 
 template<uint C, std::ptrdiff_t STEP, typename ConstIterator>
