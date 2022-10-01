@@ -17,7 +17,9 @@ constexpr const inline uint BOARD_CHIPS = BOARD_AREA / (BOARD_COLOURS - 1);
 static_assert(BOARD_CHIPS * (BOARD_COLOURS - 1) == BOARD_AREA);
 
 struct Position {
-    uint p{};
+    uint p = -1;
+
+    Position() = default;
 
     Position(uint index) : p(index) {}
 
@@ -46,18 +48,48 @@ public:
 
     Board() = default;
 
-    [[nodiscard]] ConstCellIterator get_cell_iterator(Position p) const { return &cells[p.index()]; }
+    [[nodiscard]] ConstCellIterator cells_begin() const { return cells.cbegin(); }
 
-    void place_chip(Position p, BoardInteger colour) {
-        cells[p.index()] = colour;
-        update_score_row(p.row());
-        update_score_column(p.column());
+    [[nodiscard]] ConstCellIterator cells_end() const { return cells.cend(); }
+
+    struct ChaosMove {
+        Position pos{};
+        BoardInteger colour{};
+    };
+
+    void place_chip(const ChaosMove &move) {
+        cells[move.pos.index()] = move.colour;
+        update_score_row(move.pos.row());
+        update_score_column(move.pos.column());
     }
 
-    void move_chip(Position from, Position to) {
-        if (from.index() == to.index()) return;
-        if (from.row() == to.row()) move_chip < true > (from, to.index(), to.column());
-        if (from.column() == to.column()) move_chip < false > (from, to.index(), to.row());
+    struct OrderMove {
+        Position from{};
+        uint t_index{};
+        uint x{};
+        bool vertical{};
+
+        OrderMove() = default;
+
+        OrderMove(Position from, Position to) : from(from) {
+            if (from.p == to.p) return;
+            t_index = to.index();
+            if (from.row() == to.row()) {
+                vertical = false;
+                x = to.column();
+            } else {
+                vertical = true;
+                x = to.row();
+            }
+        }
+
+        [[nodiscard]] bool is_pass() const { return -from.p == 1; }
+    };
+
+    void move_chip(const OrderMove &move) {
+        if (move.is_pass()) return;
+        if (move.vertical) move_chip<true>(move.from, move.t_index, move.x);
+        else move_chip<false>(move.from, move.t_index, move.x);
     }
 
     template<bool VERTICAL>

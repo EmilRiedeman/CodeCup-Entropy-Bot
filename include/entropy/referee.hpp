@@ -4,10 +4,6 @@
 
 namespace entropy {
 
-void start_official_game();
-
-void start_as_chaos();
-
-void start_as_order(uint colour, Position pos);
+void start_console_game();
 
 }// namespace entropy
