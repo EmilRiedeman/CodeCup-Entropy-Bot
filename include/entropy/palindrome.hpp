@@ -33,7 +33,7 @@ struct String {
 };
 
 template<uint C, std::ptrdiff_t STEP, typename ConstIterator>
-constexpr auto get_sorted_string(ConstIterator begin, uint N) {
+constexpr decltype(auto) get_sorted_string(ConstIterator begin, uint N) {
     uint translate[C]{1};
     String<C> s{};
     for (uint i = 0; i < N; ++i, begin += STEP) {
@@ -89,7 +89,7 @@ constexpr void compute_score_table(
 }
 
 template<uint C, uint N>
-constexpr auto score_lookup_table() {
+constexpr decltype(auto) score_lookup_table() {
     std::array<std::uint8_t, LookupPow<uint>::calculate<C, N>> result{};
     compute_score_table<C, N, result.size()>(result);
     return result;
