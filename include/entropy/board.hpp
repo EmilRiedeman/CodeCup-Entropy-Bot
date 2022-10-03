@@ -29,12 +29,12 @@ struct Position {
 
     [[nodiscard]] constexpr uint row() const { return p / BOARD_SIZE; }
 
-    [[nodiscard]] constexpr uint column() const { return p / BOARD_SIZE; }
+    [[nodiscard]] constexpr uint column() const { return p % BOARD_SIZE; }
 };
 
 class Board {
 public:
-    using String = String<BOARD_COLOURS>;
+    using BoardString = String<BOARD_COLOURS>;
     using CellArray = std::array<BoardInteger, BOARD_AREA>;
     using ScoreArray = std::array<BoardInteger, BOARD_SIZE>;
     using CellIterator = CellArray::pointer;
@@ -42,7 +42,7 @@ public:
 
     constexpr static auto SCORE_LOOKUP_TABLE = score_lookup_table<8, 7>();
 
-    static constexpr BoardInteger lookup_score(String s) {
+    static constexpr BoardInteger lookup_score(BoardString s) {
         return SCORE_LOOKUP_TABLE[s];
     }
 
@@ -51,6 +51,14 @@ public:
     [[nodiscard]] ConstCellIterator cells_begin() const { return cells.cbegin(); }
 
     [[nodiscard]] ConstCellIterator cells_end() const { return cells.cend(); }
+
+    [[nodiscard]] uint get_open_cells() const { return open_cells; }
+
+    [[nodiscard]] uint get_total_score() const { return total_score; }
+
+    [[nodiscard]] const ScoreArray &get_vertical_score() const { return vertical_score; }
+
+    [[nodiscard]] const ScoreArray &get_horizontal_score() const { return horizontal_score; }
 
     struct ChaosMove {
         Position pos{};
@@ -61,6 +69,7 @@ public:
         cells[move.pos.index()] = move.colour;
         update_score_row(move.pos.row());
         update_score_column(move.pos.column());
+        --open_cells;
     }
 
     struct OrderMove {
@@ -125,13 +134,14 @@ private:
                      get_sorted_string<BOARD_COLOURS, BOARD_SIZE, BOARD_SIZE>(get_column_iterator(column)));
     }
 
-    void update_score(BoardInteger &old_score, String s) {
+    void update_score(BoardInteger &old_score, BoardString s) {
         BoardInteger new_score = lookup_score(s);
         total_score += new_score - old_score;
         old_score = new_score;
     }
 
     CellArray cells{};
+    BoardInteger open_cells = BOARD_AREA;
 
     ScoreArray vertical_score{};
     ScoreArray horizontal_score{};

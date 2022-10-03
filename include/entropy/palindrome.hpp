@@ -3,8 +3,6 @@
 #include "data_types.hpp"
 #include "util.hpp"
 
-#include <cmath>
-
 namespace entropy {
 
 template<uint C>
