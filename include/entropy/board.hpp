@@ -117,12 +117,12 @@ private:
 
     void update_score_row(uint row) {
         update_score(horizontal_score[row],
-                     get_sorted_string<BOARD_COLOURS, 1>(get_row_iterator(row), BOARD_SIZE));
+                     get_sorted_string<BOARD_COLOURS, BOARD_SIZE, 1>(get_row_iterator(row)));
     }
 
     void update_score_column(uint column) {
         update_score(vertical_score[column],
-                     get_sorted_string<BOARD_COLOURS, BOARD_SIZE>(get_column_iterator(column), BOARD_SIZE));
+                     get_sorted_string<BOARD_COLOURS, BOARD_SIZE, BOARD_SIZE>(get_column_iterator(column)));
     }
 
     void update_score(BoardInteger &old_score, String s) {
