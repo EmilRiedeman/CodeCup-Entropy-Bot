@@ -47,8 +47,9 @@ void start_console_game() {
     std::string s;
     std::cin >> s;
 
+    std::random_device rd;
     if (std::isdigit(s[0])) start_as_order({read_position(std::string_view(s).substr(1, 2)), BoardInteger(s[0] - '0')});
-    else start_as_chaos<RandomChaos>(0);
+    else start_as_chaos<RandomChaos>(rd());
 }
 
 }// namespace entropy

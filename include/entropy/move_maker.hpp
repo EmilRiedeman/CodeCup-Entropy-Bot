@@ -1,6 +1,7 @@
 #pragma once
 
 #include "board.hpp"
+#include "io_util.hpp"
 
 #include <random>
 
@@ -26,7 +27,9 @@ public:
 
 class RandomChaos final : public ChaosMoveMaker {
 public:
-    explicit RandomChaos(uint seed): gen(seed) {}
+    explicit RandomChaos(uint seed): gen(seed) {
+        std::cerr << "Seed: " << seed << '\n';
+    }
 
     Board::ChaosMove suggest_move(BoardInteger colour) override {
         const uint r = std::uniform_int_distribution<uint>(0, board.get_open_cells() - 1)(gen);
@@ -40,10 +43,14 @@ public:
 
     void register_chaos_move(const Board::ChaosMove &move) override {
         board.place_chip(move);
+        std::cerr << board.get_total_score() << '\n';
+        //print_board(board);
     }
 
     void register_order_move(const Board::OrderMove &move) override {
         board.move_chip(move);
+        std::cerr << board.get_total_score() << '\n';
+        //print_board(board);
     }
 
 private:

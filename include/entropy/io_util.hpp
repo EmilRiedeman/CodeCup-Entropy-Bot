@@ -17,7 +17,24 @@ inline void print_position(Position p, std::ostream &out = std::cout) { out << c
 inline Position read_position(std::string_view str) { return {uint(str[0] - 'A'), uint(str[1] - 'a')}; }
 
 inline void print_board(const Board &b, std::ostream &out = std::cerr) {
-    //out << 'X';
+    out << ' ';
+    for (char c = 'a'; c < 'a' + BOARD_SIZE; ++c) out << ' ' << c;
+    out << '\n';
+    auto it = b.cells_begin();
+    for (uint row = 0; row < BOARD_SIZE; ++row) {
+        out << char('A' + row);
+        for (uint column = 0; column < BOARD_SIZE; ++column) {
+            out << ' ' << char((*it) ? (*it) + '0' : '_');
+            ++it;
+        }
+        out << " = " << b.get_horizontal_score()[row];
+        out << '\n';
+    }
+    out << ' ';
+    for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << b.get_vertical_score()[column] / 10;
+    out << "\n ";
+    for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << b.get_vertical_score()[column] % 10;
+    out << "   " << b.get_total_score() << '\n';
 }
 
 }// namespace entropy

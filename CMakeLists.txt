@@ -13,14 +13,15 @@ endif()
 
 ##################################################    Sources     ##################################################
 file(GLOB_RECURSE PROJECT_HEADERS include/*.h include/*.hpp include/*.ipp)
-file(GLOB_RECURSE PROJECT_SOURCES source/*.c source/*.cpp source/*.cu)
+file(GLOB_RECURSE PROJECT_SOURCES source/*.c source/entropy/*.cpp source/*.cu)
 file(GLOB_RECURSE PROJECT_CMAKE_UTILS cmake/*.cmake)
 file(GLOB_RECURSE PROJECT_MISC *.bat *.gitignore *.md *.py *.sh *.txt)
-set (PROJECT_FILES 
-  ${PROJECT_HEADERS} 
-  ${PROJECT_SOURCES} 
-  ${PROJECT_CMAKE_UTILS} 
-  ${PROJECT_MISC})
+set(PROJECT_FILES
+        source/main.cpp
+        ${PROJECT_HEADERS}
+        ${PROJECT_SOURCES}
+        ${PROJECT_CMAKE_UTILS}
+        ${PROJECT_MISC})
 
 include            (assign_source_group)
 assign_source_group(${PROJECT_FILES})
@@ -42,11 +43,11 @@ include(import_library)
 # - You may also set the PROJECT_INCLUDE_DIRS and PROJECT_LIBRARIES instead of using import_library.
 
 ##################################################    Targets     ##################################################
-add_executable(${PROJECT_NAME} ${PROJECT_FILES})
-target_include_directories(${PROJECT_NAME} PUBLIC 
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
-  $<INSTALL_INTERFACE:include> PRIVATE source)
+add_executable(${PROJECT_NAME} ${PROJECT_FILES} source/main.cpp)
+target_include_directories(${PROJECT_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+        $<INSTALL_INTERFACE:include> PRIVATE source)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_INCLUDE_DIRS})
 target_link_libraries     (${PROJECT_NAME} PUBLIC ${PROJECT_LIBRARIES})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${PROJECT_COMPILE_DEFINITIONS})

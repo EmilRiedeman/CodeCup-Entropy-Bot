@@ -4,6 +4,7 @@
 #include "palindrome.hpp"
 
 #include <array>
+#include <iostream>
 
 namespace entropy {
 
@@ -74,7 +75,7 @@ public:
 
     struct OrderMove {
         Position from{};
-        uint t_index{};
+        uint t_index = -1u;
         uint x{};
         bool vertical{};
 
@@ -92,7 +93,7 @@ public:
             }
         }
 
-        [[nodiscard]] bool is_pass() const { return -from.p == 1; }
+        [[nodiscard]] bool is_pass() const { return t_index == -1u; }
     };
 
     void move_chip(const OrderMove &move) {
