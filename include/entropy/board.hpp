@@ -3,6 +3,7 @@
 #include "data_types.hpp"
 #include "palindrome.hpp"
 
+#include <algorithm>
 #include <array>
 #include <iostream>
 
@@ -18,13 +19,15 @@ constexpr const inline uint BOARD_CHIPS = BOARD_AREA / (BOARD_COLOURS - 1);
 static_assert(BOARD_CHIPS * (BOARD_COLOURS - 1) == BOARD_AREA);
 
 struct Position {
-    uint p = -1;
+    uint p = -1u;
 
     Position() = default;
 
-    Position(uint index) : p(index) {}
+    Position(uint index): p(index) {}
 
-    Position(uint row, uint column) : p(row * BOARD_SIZE + column) {}
+    Position(uint row, uint column): p(row * BOARD_SIZE + column) {}
+
+    [[nodiscard]] constexpr bool is_none() const { return p == -1u; }
 
     [[nodiscard]] constexpr uint index() const { return p; }
 
@@ -148,5 +151,20 @@ private:
     ScoreArray horizontal_score{};
     uint total_score = 0;
 };
+
+template<typename Function>
+inline void for_each_possible_order_move(const Board &b, Function f) {
+    std::array<Position, BOARD_SIZE> vertical_from;
+    auto it = b.cells_begin();
+    for (uint row = 0; row < BOARD_SIZE; ++row) {
+        Position horizontal_from{};
+        for (uint column = 0; column < BOARD_SIZE; ++column) {
+            if (*it) horizontal_from = {row, column};
+            else if (!horizontal_from.is_none()) f();
+
+            ++it;
+        }
+    }
+}
 
 }// namespace entropy

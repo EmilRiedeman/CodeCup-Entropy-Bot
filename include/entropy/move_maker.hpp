@@ -58,4 +58,33 @@ private:
     std::mt19937 gen;
 };
 
+class RandomOrder final : public OrderMoveMaker {
+public:
+    explicit RandomOrder(uint seed): gen(seed) {
+        std::cerr << "Seed: " << seed << '\n';
+    }
+
+    Board::OrderMove suggest_move() override {
+        std::vector<Board::OrderMove> possible_moves{{}};
+
+        return possible_moves[std::uniform_int_distribution<uint>(0, possible_moves.size() - 1)(gen)];
+    }
+
+    void register_chaos_move(const Board::ChaosMove &move) override {
+        board.place_chip(move);
+        std::cerr << board.get_total_score() << '\n';
+        //print_board(board);
+    }
+
+    void register_order_move(const Board::OrderMove &move) override {
+        board.move_chip(move);
+        std::cerr << board.get_total_score() << '\n';
+        //print_board(board);
+    }
+
+private:
+    Board board;
+    std::mt19937 gen;
+};
+
 }// namespace entropy
