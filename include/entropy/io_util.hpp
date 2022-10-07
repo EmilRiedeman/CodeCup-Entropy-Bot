@@ -18,7 +18,7 @@ inline Position read_position(std::string_view str) { return {uint(str[0] - 'A')
 
 inline void print_board(const Board &b, std::ostream &out = std::cerr) {
     out << ' ';
-    for (char c = 'a'; c < 'a' + BOARD_SIZE; ++c) out << ' ' << c;
+    for (char c = 'a'; c < char('a' + BOARD_SIZE); ++c) out << ' ' << c;
     out << '\n';
     auto it = b.cells_begin();
     for (uint row = 0; row < BOARD_SIZE; ++row) {
