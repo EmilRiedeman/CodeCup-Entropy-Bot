@@ -17,28 +17,37 @@ void start_as_chaos(Args &&...args) {
             std::cin >> str;
             auto from = read_position(str);
             auto to = read_position(str + 2);
-            chaos.register_order_move({from, to});
+
+            chaos.register_order_move(Board::OrderMove::create(from, to));
         }
         std::cin >> c;
+
         auto m = chaos.suggest_move(c);
         chaos.register_chaos_move(m);
+
         print_position(m.pos, std::cout);
         std::cout << std::endl;
     }
 }
 
-void start_as_order(const Board::ChaosMove &first_move) {
+template<typename ORDER, typename... Args>
+void start_as_order(const Board::ChaosMove &first_move, Args &&...args) {
+    ORDER order(std::forward<Args>(args)...);
+    order.register_chaos_move(first_move);
     char str[5];
     for (uint move = 0; move < BOARD_AREA; ++move) {
         if (move) {
             std::cin >> str;
-            uint c = str[0] - '0';
+            uint colour = str[0] - '0';
             auto pos = read_position(str + 1);
-            print_position(pos, std::cerr);
-            std::cerr << '\n';
+
+            order.register_chaos_move({pos, colour});
         }
-        print_position(first_move.pos, std::cout);
-        print_position(first_move.pos, std::cout);
+        auto m = order.suggest_move();
+        order.register_order_move(m);
+
+        print_position(m.from, std::cout);
+        print_position(m.to(), std::cout);
         std::cout << std::endl;
     }
 }
@@ -48,7 +57,7 @@ void start_console_game() {
     std::cin >> s;
 
     std::random_device rd;
-    if (std::isdigit(s[0])) start_as_order({read_position(std::string_view(s).substr(1, 2)), BoardInteger(s[0] - '0')});
+    if (std::isdigit(s[0])) start_as_order<RandomOrder>({read_position(std::string_view(s).substr(1, 2)), BoardInteger(s[0] - '0')}, rd());
     else start_as_chaos<RandomChaos>(rd());
 }
 

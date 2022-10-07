@@ -23,6 +23,8 @@ struct Position {
 
     Position() = default;
 
+    Position(const Position &) = default;
+
     Position(uint index): p(index) {}
 
     Position(uint row, uint column): p(row * BOARD_SIZE + column) {}
@@ -79,30 +81,34 @@ public:
     struct OrderMove {
         Position from{};
         uint t_index = -1u;
-        uint x{};
+        uint change{};
         bool vertical{};
 
         OrderMove() = default;
 
-        OrderMove(Position from, Position to) : from(from) {
-            if (from.p == to.p) return;
-            t_index = to.index();
+        inline static OrderMove create(Position from, Position to) {
+            OrderMove r = {from};
+            if (from.p == to.p) return r;
+            r.t_index = to.index();
             if (from.row() == to.row()) {
-                vertical = false;
-                x = to.column();
+                r.vertical = false;
+                r.change = to.column();
             } else {
-                vertical = true;
-                x = to.row();
+                r.vertical = true;
+                r.change = to.row();
             }
+            return r;
         }
+
+        [[nodiscard]] Position to() const { return {t_index}; }
 
         [[nodiscard]] bool is_pass() const { return t_index == -1u; }
     };
 
     void move_chip(const OrderMove &move) {
         if (move.is_pass()) return;
-        if (move.vertical) move_chip<true>(move.from, move.t_index, move.x);
-        else move_chip<false>(move.from, move.t_index, move.x);
+        if (move.vertical) move_chip<true>(move.from, move.t_index, move.change);
+        else move_chip<false>(move.from, move.t_index, move.change);
     }
 
     template<bool VERTICAL>
@@ -152,19 +158,34 @@ private:
     uint total_score = 0;
 };
 
-template<typename Function>
-inline void for_each_possible_order_move(const Board &b, Function f) {
-    std::array<Position, BOARD_SIZE> vertical_from;
-    auto it = b.cells_begin();
-    for (uint row = 0; row < BOARD_SIZE; ++row) {
-        Position horizontal_from{};
-        for (uint column = 0; column < BOARD_SIZE; ++column) {
-            if (*it) horizontal_from = {row, column};
-            else if (!horizontal_from.is_none()) f();
+template<bool LEFT_TO_RIGHT, typename Function>
+inline void for_each_possible_order_move_helper(const Board &b, Function f) {
+    constexpr int step = LEFT_TO_RIGHT ? 1 : -1;
+    constexpr uint line_start = LEFT_TO_RIGHT ? 0 : (BOARD_SIZE - 1);
 
-            ++it;
+    std::array<Position, BOARD_SIZE> vertical_from{};
+    auto it = b.cells_begin() + (BOARD_AREA - 1) * !LEFT_TO_RIGHT;
+    uint pos_index = LEFT_TO_RIGHT ? 0 : (BOARD_AREA - 1);
+    for (uint row = line_start; row < BOARD_SIZE; row += step) {
+        Position horizontal_from{};
+        for (uint column = line_start; column < BOARD_SIZE; column += step) {
+            if (*it) {
+                vertical_from[column].p = horizontal_from.p = pos_index;
+            } else {
+                if (!horizontal_from.is_none()) f(Board::OrderMove{horizontal_from, pos_index, column, false});
+                if (!vertical_from[column].is_none()) f(Board::OrderMove{vertical_from[column], pos_index, row, true});
+            }
+
+            it += step;
+            pos_index += step;
         }
     }
+}
+
+template<typename Function>
+inline void for_each_possible_order_move(const Board &b, Function f) {
+    for_each_possible_order_move_helper<true>(b, f);
+    for_each_possible_order_move_helper<false>(b, f);
 }
 
 }// namespace entropy

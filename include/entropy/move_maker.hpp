@@ -43,14 +43,12 @@ public:
 
     void register_chaos_move(const Board::ChaosMove &move) override {
         board.place_chip(move);
-        std::cerr << board.get_total_score() << '\n';
-        //print_board(board);
+        print_board(board);
     }
 
     void register_order_move(const Board::OrderMove &move) override {
         board.move_chip(move);
-        std::cerr << board.get_total_score() << '\n';
-        //print_board(board);
+        print_board(board);
     }
 
 private:
@@ -67,19 +65,21 @@ public:
     Board::OrderMove suggest_move() override {
         std::vector<Board::OrderMove> possible_moves{{}};
 
+        for_each_possible_order_move(board, [&possible_moves](auto &&x) {
+            possible_moves.emplace_back(x);
+        });
+
         return possible_moves[std::uniform_int_distribution<uint>(0, possible_moves.size() - 1)(gen)];
     }
 
     void register_chaos_move(const Board::ChaosMove &move) override {
         board.place_chip(move);
-        std::cerr << board.get_total_score() << '\n';
-        //print_board(board);
+        print_board(board);
     }
 
     void register_order_move(const Board::OrderMove &move) override {
         board.move_chip(move);
-        std::cerr << board.get_total_score() << '\n';
-        //print_board(board);
+        print_board(board);
     }
 
 private:
