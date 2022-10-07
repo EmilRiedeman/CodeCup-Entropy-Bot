@@ -9,18 +9,18 @@ namespace entropy {
 
 class ChaosMoveMaker {
 public:
-    virtual void register_chaos_move(const Board::ChaosMove &move) {}
+    virtual void register_chaos_move(const Board::ChaosMove &) {}
 
-    virtual void register_order_move(const Board::OrderMove &move) {}
+    virtual void register_order_move(const Board::OrderMove &) {}
 
     virtual Board::ChaosMove suggest_move(BoardInteger colour) = 0;
 };
 
 class OrderMoveMaker {
 public:
-    virtual void register_chaos_move(const Board::ChaosMove &move) {}
+    virtual void register_chaos_move(const Board::ChaosMove &) {}
 
-    virtual void register_order_move(const Board::OrderMove &move) {}
+    virtual void register_order_move(const Board::OrderMove &) {}
 
     virtual Board::OrderMove suggest_move() = 0;
 };
