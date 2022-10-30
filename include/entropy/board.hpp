@@ -23,8 +23,6 @@ struct Position {
 
     Position() = default;
 
-    Position(const Position &) = default;
-
     Position(uint index): p(index) {}
 
     Position(uint row, uint column): p(row * BOARD_SIZE + column) {}

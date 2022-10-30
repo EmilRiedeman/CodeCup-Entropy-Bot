@@ -43,12 +43,12 @@ public:
 
     void register_chaos_move(const Board::ChaosMove &move) override {
         board.place_chip(move);
-        print_board(board);
+        std::cerr << board.get_total_score() << '\n';
     }
 
     void register_order_move(const Board::OrderMove &move) override {
         board.move_chip(move);
-        print_board(board);
+        std::cerr << board.get_total_score() << '\n';
     }
 
 private:
@@ -74,12 +74,12 @@ public:
 
     void register_chaos_move(const Board::ChaosMove &move) override {
         board.place_chip(move);
-        print_board(board);
+        std::cerr << board.get_total_score() << '\n';
     }
 
     void register_order_move(const Board::OrderMove &move) override {
         board.move_chip(move);
-        print_board(board);
+        std::cerr << board.get_total_score() << '\n';
     }
 
 private:

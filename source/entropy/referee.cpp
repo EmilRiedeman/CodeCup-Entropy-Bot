@@ -31,9 +31,9 @@ void start_as_chaos(Args &&...args) {
 }
 
 template<typename ORDER, typename... Args>
-void start_as_order(const Board::ChaosMove &first_move, Args &&...args) {
+void start_as_order(Board::ChaosMove last_move, Args &&...args) {
     ORDER order(std::forward<Args>(args)...);
-    order.register_chaos_move(first_move);
+    order.register_chaos_move(last_move);
     char str[5];
     for (uint move = 0; move < BOARD_AREA; ++move) {
         if (move) {
@@ -41,13 +41,14 @@ void start_as_order(const Board::ChaosMove &first_move, Args &&...args) {
             uint colour = str[0] - '0';
             auto pos = read_position(str + 1);
 
-            order.register_chaos_move({pos, colour});
+            last_move = Board::ChaosMove{pos, colour};
+            order.register_chaos_move(last_move);
         }
         auto m = order.suggest_move();
         order.register_order_move(m);
 
-        print_position(m.from, std::cout);
-        print_position(m.to(), std::cout);
+        print_position(m.is_pass() ? last_move.pos : m.from, std::cout);
+        print_position(m.is_pass() ? last_move.pos : m.to(), std::cout);
         std::cout << std::endl;
     }
 }
