@@ -44,7 +44,7 @@ public:
     using CellIterator = CellArray::pointer;
     using ConstCellIterator = CellArray::const_pointer;
 
-    constexpr static auto SCORE_LOOKUP_TABLE = score_lookup_table<8, 7>();
+    constexpr static inline auto SCORE_LOOKUP_TABLE = score_lookup_table<8, 7>();
 
     static constexpr BoardInteger lookup_score(BoardString s) {
         return SCORE_LOOKUP_TABLE[s];
@@ -126,13 +126,13 @@ public:
     }
 
     template<typename Function>
-    inline void for_each_possible_order_move(Function f) const {
+    void for_each_possible_order_move(Function f) const {
         for_each_possible_order_move_helper<true>(f);
         for_each_possible_order_move_helper<false>(f);
     }
 
     template<typename Function>
-    inline void for_each_empty_space(Function f) const {
+    void for_each_empty_space(Function f) const {
         auto begin = cells_begin();
         auto end = cells_end();
         uint p = 0;
@@ -164,7 +164,7 @@ private:
     }
 
     template<bool LEFT_TO_RIGHT, typename Function>
-    inline void for_each_possible_order_move_helper(Function f) const {
+    void for_each_possible_order_move_helper(Function f) const {
         constexpr int step = LEFT_TO_RIGHT ? 1 : -1;
         constexpr uint line_start = LEFT_TO_RIGHT ? 0 : (BOARD_SIZE - 1);
 
