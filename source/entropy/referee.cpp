@@ -38,7 +38,7 @@ void start_as_order(Board::ChaosMove last_move, Args &&...args) {
     for (uint move = 0; move < BOARD_AREA; ++move) {
         if (move) {
             std::cin >> str;
-            uint colour = str[0] - '0';
+            BoardInteger colour = str[0] - '0';
             auto pos = read_position(str + 1);
 
             last_move = Board::ChaosMove{pos, colour};
