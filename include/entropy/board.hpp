@@ -9,7 +9,7 @@
 
 namespace entropy {
 
-using BoardInteger = uint;
+using BoardInteger = uint32_t;
 
 constexpr const inline uint BOARD_SIZE = 7;
 constexpr const inline uint BOARD_AREA = BOARD_SIZE * BOARD_SIZE;
@@ -51,6 +51,8 @@ public:
     }
 
     Board() = default;
+
+    Board(const Board &) = default;
 
     [[nodiscard]] ConstCellIterator cells_begin() const { return cells.cbegin(); }
 
