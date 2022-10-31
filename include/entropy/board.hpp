@@ -39,7 +39,7 @@ struct Position {
 class Board {
 public:
     using BoardString = String<BOARD_COLOURS>;
-    using CellArray = std::array<BoardInteger, BOARD_AREA>;
+    using CellArray = std::array<uint8_t, BOARD_AREA>;
     using ScoreArray = std::array<BoardInteger, BOARD_SIZE>;
     using CellIterator = CellArray::pointer;
     using ConstCellIterator = CellArray::const_pointer;
