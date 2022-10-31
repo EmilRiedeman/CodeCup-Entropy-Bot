@@ -65,7 +65,7 @@ public:
     Board::OrderMove suggest_move() override {
         std::vector<Board::OrderMove> possible_moves{{}};
 
-        for_each_possible_order_move(board, [&possible_moves](auto &&x) {
+        board.for_each_possible_order_move([&possible_moves](auto &&x) {
             possible_moves.emplace_back(x);
         });
 
