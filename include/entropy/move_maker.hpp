@@ -13,7 +13,7 @@ public:
 
     virtual void register_order_move(const Board::OrderMove &) {}
 
-    virtual Board::ChaosMove suggest_move(BoardInteger colour) = 0;
+    virtual Board::ChaosMove suggest_move(Colour colour) = 0;
 };
 
 class OrderMoveMaker {
@@ -31,7 +31,7 @@ public:
         std::cerr << "Seed: " << seed << '\n';
     }
 
-    Board::ChaosMove suggest_move(BoardInteger colour) override {
+    Board::ChaosMove suggest_move(Colour colour) override {
         const uint r = std::uniform_int_distribution<uint>(0, board.get_open_cells() - 1)(gen);
         auto begin = board.cells_begin();
         auto end = board.cells_end();

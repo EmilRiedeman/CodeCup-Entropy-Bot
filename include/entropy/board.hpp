@@ -9,7 +9,7 @@
 
 namespace entropy {
 
-using BoardInteger = uint32_t;
+using Colour = uint8_t;
 
 constexpr const inline uint BOARD_SIZE = 7;
 constexpr const inline uint BOARD_AREA = BOARD_SIZE * BOARD_SIZE;
@@ -39,14 +39,14 @@ struct Position {
 class Board {
 public:
     using BoardString = String<BOARD_COLOURS>;
-    using CellArray = std::array<uint8_t, BOARD_AREA>;
-    using ScoreArray = std::array<BoardInteger, BOARD_SIZE>;
+    using CellArray = std::array<Colour, BOARD_AREA>;
+    using ScoreArray = std::array<uint, BOARD_SIZE>;
     using CellIterator = CellArray::pointer;
     using ConstCellIterator = CellArray::const_pointer;
 
     constexpr static inline auto SCORE_LOOKUP_TABLE = score_lookup_table<8, 7>();
 
-    static constexpr BoardInteger lookup_score(BoardString s) {
+    static constexpr uint lookup_score(BoardString s) {
         return SCORE_LOOKUP_TABLE[s];
     }
 
@@ -68,7 +68,7 @@ public:
 
     struct ChaosMove {
         Position pos{};
-        BoardInteger colour{};
+        Colour colour{};
     };
 
     void place_chip(const ChaosMove &move) {
@@ -159,8 +159,8 @@ private:
                      get_sorted_string<BOARD_COLOURS, BOARD_SIZE, BOARD_SIZE>(get_column_iterator(column)));
     }
 
-    void update_score(BoardInteger &old_score, BoardString s) {
-        BoardInteger new_score = lookup_score(s);
+    void update_score(uint &old_score, BoardString s) {
+        Colour new_score = lookup_score(s);
         total_score += new_score - old_score;
         old_score = new_score;
     }
@@ -190,7 +190,7 @@ private:
     }
 
     CellArray cells{};
-    BoardInteger open_cells = BOARD_AREA;
+    Colour open_cells = BOARD_AREA;
 
     ScoreArray vertical_score{};
     ScoreArray horizontal_score{};

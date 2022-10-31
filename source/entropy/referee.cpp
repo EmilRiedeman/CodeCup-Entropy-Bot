@@ -38,7 +38,7 @@ void start_as_order(Board::ChaosMove last_move, Args &&...args) {
     for (uint move = 0; move < BOARD_AREA; ++move) {
         if (move) {
             std::cin >> str;
-            BoardInteger colour = str[0] - '0';
+            Colour colour = str[0] - '0';
             auto pos = read_position(str + 1);
 
             last_move = Board::ChaosMove{pos, colour};
@@ -58,7 +58,7 @@ void start_console_game() {
     std::cin >> s;
 
     std::random_device rd;
-    if (std::isdigit(s[0])) start_as_order<RandomOrder>({read_position(std::string_view(s).substr(1, 2)), BoardInteger(s[0] - '0')}, rd());
+    if (std::isdigit(s[0])) start_as_order<RandomOrder>({read_position(std::string_view(s).substr(1, 2)), Colour(s[0] - '0')}, rd());
     else start_as_chaos<RandomChaos>(rd());
 }
 
