@@ -1,8 +1,18 @@
 #pragma once
 
 #include <array>
+#include <random>
 
 namespace entropy {
+
+struct FastRand {
+    uint seed = std::random_device()();
+
+    constexpr uint operator()() {
+        seed = (214013 * seed + 2531011);
+        return (seed >> 16) & 0x7FFF;
+    }
+};
 
 template<uint N>
 constexpr uint int_pow(uint p) {

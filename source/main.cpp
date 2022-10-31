@@ -11,6 +11,7 @@ int main(int argc, const char *args[]) {
     } else if (argc >= 2) {
         if (!std::strcmp(args[1], "benchmark")) {
             benchmark_board_copy<>();
+            benchmark_rng();
         }
     }
     return 0;
