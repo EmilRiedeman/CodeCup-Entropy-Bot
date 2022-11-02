@@ -128,18 +128,18 @@ public:
     }
 
     template<typename Function>
-    void for_each_possible_order_move(Function f) const {
-        for_each_possible_order_move_helper<true>(f);
-        for_each_possible_order_move_helper<false>(f);
+    void for_each_possible_order_move(Function &&f) const {
+        for_each_possible_order_move_helper<true>(std::forward<Function>(f));
+        for_each_possible_order_move_helper<false>(std::forward<Function>(f));
     }
 
     template<typename Function>
-    void for_each_empty_space(Function f) const {
+    void for_each_empty_space(Function &&f) const {
         auto begin = cells_begin();
         auto end = cells_end();
         uint p = 0;
         for (auto it = begin; it != end; ++it, ++p)
-            if (!*it) f(Position{p});
+            if (!*it) std::forward<Function>(f)(Position{p});
     }
 
 private:
@@ -166,7 +166,7 @@ private:
     }
 
     template<bool LEFT_TO_RIGHT, typename Function>
-    void for_each_possible_order_move_helper(Function f) const {
+    void for_each_possible_order_move_helper(Function &&f) const {
         constexpr int step = LEFT_TO_RIGHT ? 1 : -1;
         constexpr uint line_start = LEFT_TO_RIGHT ? 0 : (BOARD_SIZE - 1);
 
@@ -179,8 +179,8 @@ private:
                 if (*it) {
                     vertical_from[column].p = horizontal_from.p = pos_index;
                 } else {
-                    if (!horizontal_from.is_none()) f(Board::OrderMove{horizontal_from, pos_index, column, false});
-                    if (!vertical_from[column].is_none()) f(Board::OrderMove{vertical_from[column], pos_index, row, true});
+                    if (!horizontal_from.is_none()) std::forward<Function>(f)(Board::OrderMove{horizontal_from, pos_index, column, false});
+                    if (!vertical_from[column].is_none()) std::forward<Function>(f)(Board::OrderMove{vertical_from[column], pos_index, row, true});
                 }
 
                 it += step;
