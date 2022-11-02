@@ -6,6 +6,8 @@
 
 namespace entropy::mcts {
 
+extern FastRand RNG;
+
 class OrderNode;
 class ChaosNode;
 

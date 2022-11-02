@@ -2,11 +2,13 @@
 
 namespace entropy::mcts {
 
+FastRand RNG{};
+
 void ChaosNode::init() {
     board.for_each_empty_space([this](Position p) {
         moves[unvisited++] = p.p;
     });
-    std::shuffle(moves.begin(), moves.begin() + unvisited, FastRand());
+    std::shuffle(moves.begin(), moves.begin() + unvisited, RNG);
 }
 OrderNode *ChaosNode::add_random_child() {
     children.push_back(std::make_unique<OrderNode>(board, this, moves[--unvisited]));
