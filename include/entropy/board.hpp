@@ -26,10 +26,10 @@ struct Position {
 
     Position() = default;
 
-    template<typename T>
-    Position(T index): p(index) {}
+    template <typename T>
+    Position(T index) : p(index) {}
 
-    Position(uint row, uint column): p(row * BOARD_SIZE + column) {}
+    Position(uint row, uint column) : p(row * BOARD_SIZE + column) {}
 
     [[nodiscard]] constexpr bool is_none() const { return p == NONE_VALUE; }
 
@@ -115,7 +115,7 @@ public:
         else move_chip<false>(move.from, move.t_index, move.change);
     }
 
-    template<bool VERTICAL>
+    template <bool VERTICAL>
     void move_chip(Position from, uint t_index, uint x) {
         const auto f_index = from.index();
         const auto f_row = from.row();
@@ -131,13 +131,13 @@ public:
         else update_score_column(x);
     }
 
-    template<typename Function>
+    template <typename Function>
     void for_each_possible_order_move(Function &&f) const {
         for_each_possible_order_move_helper<true>(std::forward<Function>(f));
         for_each_possible_order_move_helper<false>(std::forward<Function>(f));
     }
 
-    template<typename Function>
+    template <typename Function>
     void for_each_empty_space(Function &&f) const {
         auto begin = cells_begin();
         auto end = cells_end();
@@ -169,7 +169,7 @@ private:
         old_score = new_score;
     }
 
-    template<bool LEFT_TO_RIGHT, typename Function>
+    template <bool LEFT_TO_RIGHT, typename Function>
     void for_each_possible_order_move_helper(Function &&f) const {
         constexpr int step = LEFT_TO_RIGHT ? 1 : -1;
         constexpr uint line_start = LEFT_TO_RIGHT ? 0 : (BOARD_SIZE - 1);

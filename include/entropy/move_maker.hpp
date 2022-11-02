@@ -27,7 +27,7 @@ public:
 
 class RandomChaos final : public ChaosMoveMaker {
 public:
-    explicit RandomChaos(uint seed): gen(seed) {
+    explicit RandomChaos(uint seed) : gen(seed) {
         std::cerr << "Seed: " << seed << '\n';
     }
 
@@ -58,7 +58,7 @@ private:
 
 class RandomOrder final : public OrderMoveMaker {
 public:
-    explicit RandomOrder(uint seed): gen(seed) {
+    explicit RandomOrder(uint seed) : gen(seed) {
         std::cerr << "Seed: " << seed << '\n';
     }
 

@@ -11,7 +11,7 @@ class ChaosNode;
 
 class OrderNode {
 public:
-    explicit OrderNode(const Board &b): board(b) {}
+    explicit OrderNode(const Board &b) : board(b) {}
 
 private:
     Board board;
@@ -23,12 +23,12 @@ class ChaosNode {
 public:
     ChaosNode() = delete;
 
-    ChaosNode(const Board &b, Colour c): board(b), colour(c) { init(); }
+    ChaosNode(const Board &b, Colour c) : board(b), colour(c) { init(); }
 
     ChaosNode(const Board &b,
               Colour c,
               OrderNode *p,
-              const Board::OrderMove &last_move): board(b), parent(p), colour(c) {
+              const Board::OrderMove &last_move) : board(b), parent(p), colour(c) {
         board.move_chip(last_move);
         init();
     };

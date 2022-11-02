@@ -14,7 +14,7 @@ struct Timer {
     const char *const name;
     time_point t_begin = std::chrono::high_resolution_clock::now();
 
-    explicit Timer(const char *name): name(name) {}
+    explicit Timer(const char *name) : name(name) {}
 
     ~Timer() {
         auto t_end = std::chrono::high_resolution_clock::now();
@@ -22,7 +22,7 @@ struct Timer {
     }
 };
 
-template<std::size_t N = 1'000'000'000, typename Function>
+template <std::size_t N = 1'000'000'000, typename Function>
 inline void benchmark(const char *name, Function &&f) {
     std::size_t i = 0;
     Timer timer(name);
@@ -30,14 +30,14 @@ inline void benchmark(const char *name, Function &&f) {
     for (; i < N; ++i) std::forward<Function>(f)();
 }
 
-template<std::size_t N = 1'000'000'000, typename Function>
+template <std::size_t N = 1'000'000'000, typename Function>
 inline void benchmark_return_value(const char *name, Function &&f) {
     benchmark(name, [&f]() {
         volatile decltype(f()) v = std::forward<Function>(f)();
     });
 }
 
-template<std::size_t N = 1'000'000'000>
+template <std::size_t N = 1'000'000'000>
 inline void benchmark_board_copy() {
     Board board;
     board.place_chip({{2, 2}, 1});
@@ -47,7 +47,7 @@ inline void benchmark_board_copy() {
     });
 }
 
-template<std::size_t N = 1'000'000'000>
+template <std::size_t N = 1'000'000'000>
 inline void benchmark_rng() {
     benchmark_return_value<N>("std::rand function", &std::rand);
 

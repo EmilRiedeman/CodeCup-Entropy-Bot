@@ -5,14 +5,14 @@
 
 namespace entropy {
 
-template<uint C>
+template <uint C>
 struct String {
     static constexpr auto POWER_TABLE = generate_array<32>([](auto x, auto) { return int_pow<C>(x); });
 
     uint hash;
 
     constexpr String() = default;
-    constexpr String(uint x): hash(x) {}
+    constexpr String(uint x) : hash(x) {}
 
     [[nodiscard]] constexpr uint read(uint index) const { return (hash / POWER_TABLE[index]) % C; }
 
@@ -22,7 +22,7 @@ struct String {
 
     constexpr operator uint() const { return hash; }
 
-    template<uint N>
+    template <uint N>
     constexpr auto to_array() const {
         std::array<uint, N> array{};
         for (uint i = 0; i < N; ++i) array[i] = read(i);
@@ -30,7 +30,7 @@ struct String {
     }
 };
 
-template<uint C, uint N, std::ptrdiff_t STEP, typename ConstIterator>
+template <uint C, uint N, std::ptrdiff_t STEP, typename ConstIterator>
 constexpr decltype(auto) get_sorted_string(ConstIterator begin) {
     uint translate[C]{1};
     String<C> s{};
@@ -43,7 +43,7 @@ constexpr decltype(auto) get_sorted_string(ConstIterator begin) {
     return s;
 }
 
-template<uint C>
+template <uint C>
 constexpr inline uint8_t count(String<C> string, uint left, uint right, const uint begin, const uint end) {
     uint8_t score = 0;
     for (; left + 1 > begin && right <= end; --left, ++right) {
@@ -53,7 +53,7 @@ constexpr inline uint8_t count(String<C> string, uint left, uint right, const ui
     return score;
 }
 
-template<uint C>
+template <uint C>
 constexpr inline uint8_t score_string(String<C> string, const uint begin, const uint end) {
     uint8_t score = 0;
     for (uint i = begin; i < end; ++i) {
@@ -63,7 +63,7 @@ constexpr inline uint8_t score_string(String<C> string, const uint begin, const 
     return score;
 }
 
-template<uint C, uint STOP, uint N>
+template <uint C, uint STOP, uint N>
 constexpr void compute_score_table(
         std::array<std::uint8_t, N> &table,
         String<C> cur_sequence = {},
@@ -86,7 +86,7 @@ constexpr void compute_score_table(
     compute_score_table<C, STOP, N>(table, next_seq, colours + 1, begin, end + 1, prev_score);
 }
 
-template<uint C, uint N>
+template <uint C, uint N>
 constexpr decltype(auto) score_lookup_table() {
     std::array<std::uint8_t, LookupPow<uint>::calculate<C, N>> result{};
     compute_score_table<C, N, result.size()>(result);

@@ -7,7 +7,7 @@
 
 namespace entropy {
 
-template<typename CHAOS, typename... Args>
+template <typename CHAOS, typename... Args>
 void start_as_chaos(Args &&...args) {
     CHAOS chaos(std::forward<Args>(args)...);
     uint c;
@@ -30,7 +30,7 @@ void start_as_chaos(Args &&...args) {
     }
 }
 
-template<typename ORDER, typename... Args>
+template <typename ORDER, typename... Args>
 void start_as_order(Board::ChaosMove last_move, Args &&...args) {
     ORDER order(std::forward<Args>(args)...);
     order.register_chaos_move(last_move);
