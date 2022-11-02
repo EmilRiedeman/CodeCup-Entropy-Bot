@@ -26,7 +26,8 @@ struct Position {
 
     Position() = default;
 
-    Position(IntType index): p(index) {}
+    template<typename T>
+    Position(T index): p(index) {}
 
     Position(uint row, uint column): p(row * BOARD_SIZE + column) {}
 
