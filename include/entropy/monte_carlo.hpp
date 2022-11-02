@@ -6,24 +6,44 @@
 
 namespace entropy::mcts {
 
-struct OrderNode;
-struct ChaosNode;
+class OrderNode;
+class ChaosNode;
 
-struct OrderNode {
-    Board board;
-    std::vector<std::shared_ptr<ChaosNode>> children{};
-    const std::weak_ptr<ChaosNode> parent{};
-    std::array<Board::ChaosMove, BOARD_AREA * 2> moves{};
-
+class OrderNode {
+public:
     explicit OrderNode(const Board &b): board(b) {}
+
+private:
+    Board board;
+    std::vector<std::unique_ptr<ChaosNode>> children{};
+    const std::weak_ptr<ChaosNode> parent{};
 };
 
-struct ChaosNode {
-    Board board;
-    std::vector<std::shared_ptr<OrderNode>> children{};
-    const std::weak_ptr<OrderNode> parent{};
+class ChaosNode {
+public:
+    ChaosNode() = delete;
 
-    explicit ChaosNode(const Board &b): board(b) {}
+    ChaosNode(const Board &b, Colour c): board(b), colour(c) { init(); }
+
+    ChaosNode(const Board &b,
+              Colour c,
+              OrderNode *p,
+              const Board::OrderMove &last_move): board(b), parent(p), colour(c) {
+        board.move_chip(last_move);
+        init();
+    };
+
+    OrderNode *add_random_child();
+
+private:
+    void init();
+
+    Board board;
+    std::vector<std::unique_ptr<OrderNode>> children{};
+    OrderNode *const parent{};
+    const Colour colour;
+    std::array<uint8_t, BOARD_AREA> moves{};
+    uint unvisited{};
 };
 
 }// namespace entropy::mcts
