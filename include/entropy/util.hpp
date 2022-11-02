@@ -6,12 +6,18 @@
 namespace entropy {
 
 struct FastRand {
-    uint seed = std::random_device()();
+    typedef uint result_type;
 
-    constexpr uint operator()() {
+    result_type seed = std::random_device()();
+
+    constexpr result_type operator()() {
         seed = (214013 * seed + 2531011);
         return (seed >> 16) & 0x7FFF;
     }
+
+    [[nodiscard]] constexpr result_type min() const { return std::numeric_limits<result_type>::min(); }
+
+    [[nodiscard]] constexpr result_type max() const { return std::numeric_limits<result_type>::max(); }
 };
 
 template<uint N>
