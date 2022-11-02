@@ -37,7 +37,7 @@ public:
         auto end = board.cells_end();
         uint i = 0;
         for (auto it = begin; it != end; ++it)
-            if (!*it && i++ == r) return {it - begin, colour};
+            if (!*it && i++ == r) return {Position::IntType(it - begin), colour};
         return {};
     }
 

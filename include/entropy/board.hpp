@@ -19,15 +19,18 @@ constexpr const inline uint BOARD_CHIPS = BOARD_AREA / (BOARD_COLOURS - 1);
 static_assert(BOARD_CHIPS * (BOARD_COLOURS - 1) == BOARD_AREA);
 
 struct Position {
-    uint p = -1u;
+    typedef uint IntType;
+    constexpr static IntType NONE_VALUE = std::numeric_limits<IntType>::max();
+
+    IntType p = NONE_VALUE;
 
     Position() = default;
 
-    Position(uint index): p(index) {}
+    Position(IntType index): p(index) {}
 
     Position(uint row, uint column): p(row * BOARD_SIZE + column) {}
 
-    [[nodiscard]] constexpr bool is_none() const { return p == -1u; }
+    [[nodiscard]] constexpr bool is_none() const { return p == NONE_VALUE; }
 
     [[nodiscard]] constexpr uint index() const { return p; }
 
@@ -80,7 +83,7 @@ public:
 
     struct OrderMove {
         Position from{};
-        uint t_index = -1u;
+        Position::IntType t_index = Position::NONE_VALUE;
         uint change{};
         bool vertical{};
 
@@ -102,7 +105,7 @@ public:
 
         [[nodiscard]] Position to() const { return {t_index}; }
 
-        [[nodiscard]] bool is_pass() const { return t_index == -1u; }
+        [[nodiscard]] bool is_pass() const { return t_index == Position::NONE_VALUE; }
     };
 
     void move_chip(const OrderMove &move) {
@@ -137,7 +140,7 @@ public:
     void for_each_empty_space(Function &&f) const {
         auto begin = cells_begin();
         auto end = cells_end();
-        uint p = 0;
+        Position::IntType p{};
         for (auto it = begin; it != end; ++it, ++p)
             if (!*it) std::forward<Function>(f)(Position{p});
     }
@@ -172,7 +175,7 @@ private:
 
         std::array<Position, BOARD_SIZE> vertical_from{};
         auto it = cells_begin() + (BOARD_AREA - 1) * !LEFT_TO_RIGHT;
-        uint pos_index = LEFT_TO_RIGHT ? 0 : (BOARD_AREA - 1);
+        Position::IntType pos_index = LEFT_TO_RIGHT ? 0 : (BOARD_AREA - 1);
         for (uint row = line_start; row < BOARD_SIZE; row += step) {
             Position horizontal_from{};
             for (uint column = line_start; column < BOARD_SIZE; column += step) {
