@@ -20,7 +20,7 @@ static_assert(BOARD_CHIPS * (BOARD_COLOURS - 1) == BOARD_AREA);
 
 struct Position {
     typedef uint IntType;
-    constexpr static IntType NONE_VALUE = std::numeric_limits<IntType>::max();
+    constexpr inline static IntType NONE_VALUE = std::numeric_limits<IntType>::max();
 
     IntType p = NONE_VALUE;
 
@@ -38,6 +38,34 @@ struct Position {
     [[nodiscard]] constexpr uint row() const { return p / BOARD_SIZE; }
 
     [[nodiscard]] constexpr uint column() const { return p % BOARD_SIZE; }
+};
+
+struct ChipPool {
+    typedef uint8_t IntType;
+    constexpr inline static std::size_t N = BOARD_COLOURS - 1;
+
+    std::array<IntType, N> prefix_sum{};
+    std::uniform_int_distribution<uint> distribution;
+
+    ChipPool() {
+        prefix_sum.front() = BOARD_CHIPS;
+        for (uint i = 1; i < BOARD_COLOURS - 1; ++i) prefix_sum[i] = prefix_sum[i - 1] + BOARD_CHIPS;
+        distribution = std::uniform_int_distribution<uint>(0, prefix_sum.back() - 1);
+    }
+
+    ChipPool(std::initializer_list<IntType> l) {
+        std::partial_sum(l.begin(), l.begin() + N, prefix_sum.begin());
+        distribution = std::uniform_int_distribution<uint>(0, prefix_sum.back() - 1);
+    }
+
+    ChipPool(const ChipPool &o, uint c) : prefix_sum(o.prefix_sum), distribution(0, prefix_sum.back() - 1) {
+        for (; c < prefix_sum.size(); ++c) --prefix_sum[c];
+    }
+
+    template <typename RandomGenerator>
+    constexpr Colour random_chip(RandomGenerator &&gen) const {
+        return Colour(std::upper_bound(prefix_sum.begin(), prefix_sum.end(), distribution(gen)) - prefix_sum.begin());
+    }
 };
 
 class Board {
@@ -87,6 +115,25 @@ public:
         Position::IntType t_index = Position::NONE_VALUE;
         uint change{};
         bool vertical{};
+
+        struct Compact {
+            uint16_t data{};
+
+            Compact() = default;
+
+            Compact(const OrderMove &m) : data((m.from.p << 10) |
+                                               (m.t_index << 4) |
+                                               (m.change << 1) |
+                                               m.vertical) {}
+
+            [[nodiscard]] OrderMove create() const {
+                return OrderMove{
+                        data >> 10,
+                        Position::IntType(data & 0b1111110000) >> 4,
+                        Position::IntType(data & 0b0000001110) >> 1,
+                        bool(data & 1)};
+            }
+        };
 
         OrderMove() = default;
 
