@@ -33,7 +33,7 @@ inline void benchmark(const char *name, Function &&f) {
 template <std::size_t N = 1'000'000'000, typename Function>
 inline void benchmark_return_value(const char *name, Function &&f) {
     benchmark(name, [&f]() {
-        volatile decltype(f()) v = std::forward<Function>(f)();
+        [[maybe_unused]] volatile decltype(f()) v = std::forward<Function>(f)();
     });
 }
 
@@ -43,7 +43,7 @@ inline void benchmark_board_copy() {
     board.place_chip({{2, 2}, 1});
     board.place_chip({{2, 3}, 5});
     benchmark<N>("board copy", [&board]() {
-        volatile Board copy = board;
+        [[maybe_unused]] volatile Board copy = board;
     });
 }
 
