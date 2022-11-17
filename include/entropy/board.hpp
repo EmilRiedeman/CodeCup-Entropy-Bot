@@ -76,7 +76,7 @@ public:
     using CellIterator = CellArray::pointer;
     using ConstCellIterator = CellArray::const_pointer;
 
-    constexpr static inline auto SCORE_LOOKUP_TABLE = score_lookup_table<8, 7>();
+    constexpr static inline auto SCORE_LOOKUP_TABLE = score_lookup_table<BOARD_COLOURS, BOARD_SIZE>();
 
     static constexpr uint lookup_score(BoardString s) {
         return SCORE_LOOKUP_TABLE[s];
