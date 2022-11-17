@@ -45,7 +45,7 @@ struct ChipPool {
     constexpr inline static std::size_t N = BOARD_COLOURS - 1;
 
     std::array<IntType, N> prefix_sum{};
-    std::uniform_int_distribution<uint> distribution;
+    mutable std::uniform_int_distribution<uint> distribution;
 
     ChipPool() {
         prefix_sum.front() = BOARD_CHIPS;
@@ -64,7 +64,7 @@ struct ChipPool {
 
     template <typename RandomGenerator>
     constexpr Colour random_chip(RandomGenerator &&gen) const {
-        return Colour(std::upper_bound(prefix_sum.begin(), prefix_sum.end(), distribution(gen)) - prefix_sum.begin());
+        return Colour(std::upper_bound(prefix_sum.begin(), prefix_sum.end(), distribution(gen)) - prefix_sum.begin() + 1);
     }
 };
 

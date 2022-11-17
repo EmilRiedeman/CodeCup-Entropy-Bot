@@ -23,6 +23,8 @@ public:
             ChaosNode *p,
             const Board::ChaosMove &new_move);
 
+    ChaosNode *add_random_child();
+
 private:
     void init();
 
@@ -30,9 +32,9 @@ private:
     const ChipPool pool;
     ChaosNode *const parent{};
     std::vector<std::unique_ptr<ChaosNode>> children{};
-    uint unvisited{};
 
     std::array<Board::OrderMove::Compact, BOARD_AREA * 2> moves{};// not safe size
+    uint unvisited{};
 
     friend ChaosNode;
 };
@@ -43,15 +45,17 @@ public:
 
     ChaosNode(
             const Board &b,
-            const ChipPool &pool,
-            Colour c) : board(b), pool(pool), colour(c) { init(); }
+            const ChipPool &pool) : board(b), pool(pool) { init(); }
 
     ChaosNode(
             OrderNode *p,
-            const Board::OrderMove &new_move,
-            Colour c);
+            const Board::OrderMove &new_move);
 
-    OrderNode *add_random_child();
+    Colour random_colour() const { return pool.random_chip(RNG); }
+
+    OrderNode *add_random_child(Colour colour);
+
+    [[nodiscard]] bool can_add_child(Colour colour) const { return unvisited[colour - 1]; }
 
 private:
     void init();
@@ -59,13 +63,14 @@ private:
     Board board;
     const ChipPool pool;
     OrderNode *const parent{};
-    std::vector<std::unique_ptr<OrderNode>> children{};
-    uint unvisited{};
+    std::array<std::vector<std::unique_ptr<OrderNode>>, ChipPool::N> children{};
+    std::array<uint, ChipPool::N> unvisited{};
 
-    const Colour colour;
     std::array<uint8_t, BOARD_AREA> moves{};
 
     friend OrderNode;
 };
+
+void tree_search(ChaosNode &node, uint rollouts);
 
 }// namespace entropy::mcts
