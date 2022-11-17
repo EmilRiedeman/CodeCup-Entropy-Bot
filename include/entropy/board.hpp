@@ -26,7 +26,7 @@ struct Position {
 
     Position() = default;
 
-    template <typename T>
+    template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
     Position(T index) : p(index) {}
 
     Position(uint row, uint column) : p(row * BOARD_SIZE + column) {}
