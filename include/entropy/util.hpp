@@ -12,7 +12,7 @@ struct FastRand {
 
     constexpr result_type operator()() {
         seed = (214013 * seed + 2531011);
-        return (seed >> 16) & 0x7FFF;
+        return seed >> 17;
     }
 
     [[nodiscard]] constexpr result_type min() const { return 0; }
