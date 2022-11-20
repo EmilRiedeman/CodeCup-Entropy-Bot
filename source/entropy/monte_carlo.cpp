@@ -48,8 +48,39 @@ OrderNode *ChaosNode::add_random_child(Colour colour) {
     return children[colour - 1].back().get();
 }
 
-void tree_search(ChaosNode &node, uint rollouts) {
+uint simulate_score(const Board &b) {
+    return b.get_total_score();
+}
+
+float uct_score(float avg_score, float logN, float n, float temperature) {
+    return avg_score * temperature * std::sqrt(logN / n);
+}
+
+void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts) {
+    if (root.is_terminal()) return;
+
+    while (root.can_add_child(c)) root.add_random_child(c);
+
     for (uint i = 0; i < rollouts; ++i) {
+        OrderNode *o_node;
+        ChaosNode *c_node;
+
+        o_node = root.select_child(c);
+
+        while (true) {
+            if (o_node->can_add_child()) {
+                o_node->add_random_child();
+                break;
+            }
+            c_node = o_node->select_child();
+            auto random_colour = c_node->random_colour();
+
+            if (c_node->can_add_child(random_colour)) {
+                c_node->add_random_child(random_colour);
+                break;
+            }
+            o_node = c_node->select_child(random_colour);
+        }
     }
 }
 
