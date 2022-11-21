@@ -3,6 +3,7 @@
 #include "board.hpp"
 #include "io_util.hpp"
 #include "monte_carlo.hpp"
+#include "referee.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -72,6 +73,18 @@ inline void benchmark_mcts_ponder() {
         tree_search_chaos(node, 1, ROLLOUTS);
     }
     print_position(node.select_move(1).pos, std::cerr);
+}
+
+inline void benchmark_simulated_game() {
+    using namespace mcts;
+    {
+        Timer t("MCTS (chaos) vs Random (order)");
+        simulate_game(mcts::MoveMaker(), RandomMoveMaker());
+    }
+    {
+        Timer t("Random (chaos) vs MCTS (order)");
+        simulate_game(RandomMoveMaker(), mcts::MoveMaker());
+    }
 }
 
 }// namespace entropy

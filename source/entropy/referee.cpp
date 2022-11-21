@@ -58,7 +58,7 @@ void start_console_game() {
     std::string s;
     std::cin >> s;
 
-    if (std::isdigit(s[0])) start_as_order<RandomMoveMaker>({read_position(std::string_view(s).substr(1, 2)), Colour(s[0] - '0')});
+    if (std::isdigit(s[0])) start_as_order<mcts::MoveMaker>({read_position(std::string_view(s).substr(1, 2)), Colour(s[0] - '0')});
     else start_as_chaos<mcts::MoveMaker>();
 }
 

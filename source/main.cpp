@@ -15,7 +15,7 @@ int main(int argc, const char *args[]) {
         start_console_game();
     } else if (argc >= 2) {
         if (!std::strcmp(args[1], "benchmark")) {
-            benchmark_mcts_ponder();
+            benchmark_simulated_game();
         }
         if (!std::strcmp(args[1], "competition")) {
             simulate_game(mcts::MoveMaker(), mcts::MoveMaker());

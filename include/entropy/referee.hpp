@@ -27,9 +27,8 @@ inline uint simulate_game(CHAOS &&chaos, ORDER &&order) {
         b.move_chip(order_move);
         chaos.register_order_move(order_move);
         order.register_order_move(order_move);
-
-        print_board(b);
     }
+    print_board(b);
 
     return b.get_total_score();
 }

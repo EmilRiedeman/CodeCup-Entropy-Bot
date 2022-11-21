@@ -59,7 +59,7 @@ struct ChipPool {
     }
 
     ChipPool(const ChipPool &o, uint c) : prefix_sum(o.prefix_sum), distribution(0, prefix_sum.back() - 2) {
-        for (; c < prefix_sum.size(); ++c) --prefix_sum[c];
+        for (--c; c < prefix_sum.size(); ++c) --prefix_sum[c];
     }
 
     template <typename RandomGenerator>
