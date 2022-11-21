@@ -9,6 +9,8 @@ namespace entropy::mcts {
 
 extern FastRand RNG;
 
+class MMChaos;
+
 class OrderNode;
 class ChaosNode;
 
@@ -51,6 +53,15 @@ public:
             ChaosNode *p,
             const Board::ChaosMove &new_move);
 
+    void set_as_root() { parent = nullptr; }
+
+    std::unique_ptr<ChaosNode> *get_child(const Board::OrderMove &move) {
+        auto it = std::find_if(children.begin(), children.end(),
+                               [=](const auto &x) { return move == x->last_move; });
+        if (it == children.end()) return nullptr;
+        return &*it;
+    }
+
     ChaosNode *add_random_child();
 
     ChaosNode *select_child() const;
@@ -70,7 +81,7 @@ private:
 
     Board board;
     const ChipPool pool;
-    ChaosNode *const parent{};
+    ChaosNode *parent{};
     std::vector<std::unique_ptr<ChaosNode>> children{};
 
     const Board::ChaosMove last_move{};
@@ -78,10 +89,11 @@ private:
     uint total_visits{};
     uint total_score{};
 
-    std::array<Board::OrderMove::Compact, BOARD_AREA * 2> moves{};// not safe size
+    std::array<Board::OrderMove::Compact, 108> moves{};// not safe size maybe ???
     uint unvisited{};
 
     friend ChaosNode;
+    friend MMChaos;
 };
 
 class ChaosNode {
@@ -95,6 +107,16 @@ public:
     ChaosNode(
             OrderNode *p,
             const Board::OrderMove &new_move);
+
+    void set_as_root() { parent = nullptr; }
+
+    std::unique_ptr<OrderNode> *get_child(const Board::ChaosMove &move) {
+        auto &vec = children[move.colour - 1];
+        auto it = std::find_if(vec.begin(), vec.end(),
+                               [=](const auto &x) { return move.pos.p == x->last_move.pos.p; });
+        if (it == vec.end()) return nullptr;
+        return &*it;
+    }
 
     OrderNode *add_random_child(Colour colour);
 
@@ -112,6 +134,21 @@ public:
 
     Colour random_colour() const { return pool.random_chip(RNG); }
 
+    void clear_colours(uint keep) {
+        for (uint c = 0; c < children.size(); ++c) {
+            if (c == keep - 1) continue;
+            unvisited[c] += children[c].size();
+
+            children[c].clear();
+
+            total_visits -= visits[c];
+            total_score -= scores[c];
+
+            scores[c] = 0;
+            visits[c] = 0;
+        }
+    }
+
 private:
     void init();
 
@@ -119,7 +156,7 @@ private:
 
     Board board;
     const ChipPool pool;
-    OrderNode *const parent{};
+    OrderNode *parent{};
     std::array<std::vector<std::unique_ptr<OrderNode>>, ChipPool::N> children{};
 
     const Board::OrderMove last_move{};
@@ -133,6 +170,7 @@ private:
     std::array<uint8_t, ChipPool::N> unvisited{};
 
     friend OrderNode;
+    friend MMChaos;
 };
 
 class MMChaos final : public ChaosMoveMaker {
@@ -142,25 +180,50 @@ public:
     }
 
     Board::ChaosMove suggest_move(Colour colour) override {
-        ChaosNode node(board, chip_pool);
-        tree_search_chaos(node, colour, rollouts);
-        return node.select_move(colour);
+        if (!chaos_node) chaos_node = std::make_unique<ChaosNode>(board, chip_pool);
+        else {
+            chaos_node->clear_colours(uint(colour));
+        }
+        std::cerr << "Already visited " << chaos_node->total_visits << " times in current node\n";
+
+        tree_search_chaos(*chaos_node, colour, rollouts);
+        return chaos_node->select_move(colour);
     }
 
     void register_chaos_move(const Board::ChaosMove &move) override {
         board.place_chip(move);
         chip_pool = ChipPool(chip_pool, move.colour);
+
+        if (chaos_node) {
+            auto ptr = chaos_node->get_child(move);
+
+            if (ptr) order_node = std::move(*ptr);
+            else order_node = nullptr;
+
+            chaos_node = nullptr;
+        }
     }
 
     void register_order_move(const Board::OrderMove &move) override {
         board.move_chip(move);
+
+        if (order_node) {
+            auto ptr = order_node->get_child(move);
+
+            if (ptr) chaos_node = std::move(*ptr);
+            else chaos_node = nullptr;
+
+            order_node = nullptr;
+        }
     }
 
 private:
     Board board;
     ChipPool chip_pool;
+    std::unique_ptr<OrderNode> order_node{};
+    std::unique_ptr<ChaosNode> chaos_node{};
 
-    uint rollouts = 50000;
+    uint rollouts = 500000;
 };
 
 

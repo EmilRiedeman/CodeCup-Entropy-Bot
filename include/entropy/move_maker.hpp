@@ -84,7 +84,7 @@ public:
 
 private:
     Board board;
-    FastRand gen{320368028};
+    FastRand gen{};
 };
 
 }// namespace entropy

@@ -101,6 +101,10 @@ public:
     struct ChaosMove {
         Position pos{};
         Colour colour{};
+
+        bool operator==(const ChaosMove &m) const {
+            return pos.p == m.pos.p && colour == m.colour;
+        }
     };
 
     void place_chip(const ChaosMove &move) {
@@ -138,6 +142,10 @@ public:
         };
 
         OrderMove() = default;
+
+        bool operator==(const OrderMove &m) const {
+            return (is_pass() && m.is_pass()) || (from.p == m.from.p && t_index == m.t_index);
+        }
 
         inline static OrderMove create(Position from, Position to) {
             OrderMove r = {from};

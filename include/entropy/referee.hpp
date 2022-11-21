@@ -8,7 +8,7 @@ namespace entropy {
 template <typename CHAOS, typename ORDER>
 inline uint simulate_game(CHAOS &&chaos, ORDER &&order) {
     Board b;
-    FastRand rand{4126770466};
+    FastRand rand{};
     std::cerr << "Simulation game seed: " << rand.seed << '\n';
     ChipPool pool;
 

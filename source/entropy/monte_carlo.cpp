@@ -2,7 +2,7 @@
 
 namespace entropy::mcts {
 
-FastRand RNG{3318484193};
+FastRand RNG{};
 
 OrderNode::OrderNode(
         ChaosNode *p,
@@ -124,6 +124,7 @@ void tree_search_order(OrderNode &root, uint rollouts) {
 
 void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts) {
     if (root.is_terminal()) return;
+    root.set_as_root();
 
     while (root.can_add_child(c)) root.add_random_child(c)->rollout();
 
