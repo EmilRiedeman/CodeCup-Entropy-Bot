@@ -182,7 +182,7 @@ public:
     Board::ChaosMove suggest_chaos_move(Colour colour) override {
         if (!chaos_node) chaos_node = std::make_unique<ChaosNode>(board, chip_pool);
         else chaos_node->clear_colours(uint(colour));
-        std::cerr << chaos_node->total_visits << "\n";
+        //std::cerr << chaos_node->total_visits << "\n";
 
         tree_search_chaos(*chaos_node, colour, rollouts);
         return chaos_node->select_move(colour);
@@ -190,7 +190,7 @@ public:
 
     Board::OrderMove suggest_order_move() override {
         if (!order_node) order_node = std::make_unique<OrderNode>(board, chip_pool);
-        std::cerr << order_node->total_visits << "\n";
+        //std::cerr << order_node->total_visits << "\n";
 
         tree_search_order(*order_node, rollouts);
         return order_node->select_move();
