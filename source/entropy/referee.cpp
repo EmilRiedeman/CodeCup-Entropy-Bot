@@ -1,6 +1,7 @@
 #include "entropy/referee.hpp"
 
 #include "entropy/io_util.hpp"
+#include "entropy/monte_carlo.hpp"
 #include "entropy/move_maker.hpp"
 
 #include <memory>
@@ -58,7 +59,7 @@ void start_console_game() {
     std::cin >> s;
 
     if (std::isdigit(s[0])) start_as_order<RandomOrder>({read_position(std::string_view(s).substr(1, 2)), Colour(s[0] - '0')});
-    else start_as_chaos<RandomChaos>();
+    else start_as_chaos<mcts::MMChaos>();
 }
 
 }// namespace entropy

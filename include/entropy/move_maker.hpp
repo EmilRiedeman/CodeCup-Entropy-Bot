@@ -43,12 +43,12 @@ public:
 
     void register_chaos_move(const Board::ChaosMove &move) override {
         board.place_chip(move);
-        std::cerr << board.get_total_score() << '\n';
+        //std::cerr << board.get_total_score() << '\n';
     }
 
     void register_order_move(const Board::OrderMove &move) override {
         board.move_chip(move);
-        std::cerr << board.get_total_score() << '\n';
+        //std::cerr << board.get_total_score() << '\n';
     }
 
 private:
@@ -74,17 +74,17 @@ public:
 
     void register_chaos_move(const Board::ChaosMove &move) override {
         board.place_chip(move);
-        std::cerr << board.get_total_score() << '\n';
+        //std::cerr << board.get_total_score() << '\n';
     }
 
     void register_order_move(const Board::OrderMove &move) override {
         board.move_chip(move);
-        std::cerr << board.get_total_score() << '\n';
+        //std::cerr << board.get_total_score() << '\n';
     }
 
 private:
     Board board;
-    FastRand gen;
+    FastRand gen{320368028};
 };
 
 }// namespace entropy

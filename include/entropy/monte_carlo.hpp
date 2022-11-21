@@ -1,6 +1,7 @@
 #pragma once
 
 #include "board.hpp"
+#include "move_maker.hpp"
 
 #include <memory>
 
@@ -133,5 +134,34 @@ private:
 
     friend OrderNode;
 };
+
+class MMChaos final : public ChaosMoveMaker {
+public:
+    MMChaos() {
+        std::cerr << "MCTS Seed: " << RNG.seed << '\n';
+    }
+
+    Board::ChaosMove suggest_move(Colour colour) override {
+        ChaosNode node(board, chip_pool);
+        tree_search_chaos(node, colour, rollouts);
+        return node.select_move(colour);
+    }
+
+    void register_chaos_move(const Board::ChaosMove &move) override {
+        board.place_chip(move);
+        chip_pool = ChipPool(chip_pool, move.colour);
+    }
+
+    void register_order_move(const Board::OrderMove &move) override {
+        board.move_chip(move);
+    }
+
+private:
+    Board board;
+    ChipPool chip_pool;
+
+    uint rollouts = 50000;
+};
+
 
 }// namespace entropy::mcts

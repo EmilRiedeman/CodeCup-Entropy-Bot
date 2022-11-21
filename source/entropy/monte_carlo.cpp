@@ -2,7 +2,7 @@
 
 namespace entropy::mcts {
 
-FastRand RNG{};
+FastRand RNG{3318484193};
 
 OrderNode::OrderNode(
         ChaosNode *p,

@@ -15,8 +15,10 @@ int main(int argc, const char *args[]) {
         start_console_game();
     } else if (argc >= 2) {
         if (!std::strcmp(args[1], "benchmark")) {
-            benchmark_board_copy<>();
-            benchmark_rng();
+            benchmark_mcts_ponder();
+        }
+        if (!std::strcmp(args[1], "competition")) {
+            simulate_game(mcts::MMChaos(), RandomOrder());
         }
     }
     return 0;

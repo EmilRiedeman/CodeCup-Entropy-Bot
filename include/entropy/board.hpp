@@ -58,7 +58,7 @@ struct ChipPool {
         distribution = std::uniform_int_distribution<uint>(0, prefix_sum.back() - 1);
     }
 
-    ChipPool(const ChipPool &o, uint c) : prefix_sum(o.prefix_sum), distribution(0, prefix_sum.back() - 1) {
+    ChipPool(const ChipPool &o, uint c) : prefix_sum(o.prefix_sum), distribution(0, prefix_sum.back() - 2) {
         for (; c < prefix_sum.size(); ++c) --prefix_sum[c];
     }
 

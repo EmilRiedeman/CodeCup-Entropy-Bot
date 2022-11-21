@@ -1,6 +1,8 @@
 #pragma once
 
 #include "board.hpp"
+#include "io_util.hpp"
+#include "monte_carlo.hpp"
 
 #include <chrono>
 #include <iostream>
@@ -13,6 +15,8 @@ using time_point = std::chrono::high_resolution_clock::time_point;
 struct Timer {
     const char *const name;
     time_point t_begin = std::chrono::high_resolution_clock::now();
+
+    Timer() = delete;
 
     explicit Timer(const char *name) : name(name) {}
 
@@ -56,6 +60,18 @@ inline void benchmark_rng() {
 
     std::mt19937 gen2{};
     benchmark_return_value<N>("std::mt19937 generator", gen2);
+}
+
+template <std::size_t ROLLOUTS = 1'000'000>
+inline void benchmark_mcts_ponder() {
+    using namespace mcts;
+    Board b;
+    ChaosNode node(b, ChipPool{});
+    {
+        Timer t("Monte Carlo tree search ponder");
+        tree_search_chaos(node, 1, ROLLOUTS);
+    }
+    print_position(node.select_move(1).pos, std::cerr);
 }
 
 }// namespace entropy
