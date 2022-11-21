@@ -48,11 +48,11 @@ OrderNode *ChaosNode::add_random_child(Colour colour) {
     return children[colour - 1].back().get();
 }
 
-uint simulate_score(const Board &b) {
+inline uint simulate_score(const Board &b) {
     return b.get_total_score();
 }
 
-float uct_score(float avg_score, float logN, float n, float temperature) {
+inline float uct_score(float avg_score, float logN, float n, float temperature) {
     return avg_score * temperature * std::sqrt(logN / n);
 }
 
