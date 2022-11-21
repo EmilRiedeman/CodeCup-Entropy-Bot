@@ -198,6 +198,7 @@ public:
 
     void register_chaos_move(const Board::ChaosMove &move) override {
         board.place_chip(move);
+        //print_board(board);
         chip_pool = ChipPool(chip_pool, move.colour);
 
         if (chaos_node) {
@@ -212,6 +213,7 @@ public:
 
     void register_order_move(const Board::OrderMove &move) override {
         board.move_chip(move);
+        //print_board(board);
 
         if (order_node) {
             auto ptr = order_node->get_child(move);

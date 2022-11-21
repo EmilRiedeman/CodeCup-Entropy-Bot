@@ -16,12 +16,14 @@ void start_as_chaos(Args &&...args) {
     for (uint move = 0; move < BOARD_AREA; ++move) {
         if (move) {
             std::cin >> str;
+            std::cerr << str << '\n';
             auto from = read_position(str);
             auto to = read_position(str + 2);
 
             chaos.register_order_move(Board::OrderMove::create(from, to));
         }
         std::cin >> c;
+        std::cerr << c << '\n';
 
         auto m = chaos.suggest_chaos_move(c);
         chaos.register_chaos_move(m);
@@ -39,6 +41,7 @@ void start_as_order(Board::ChaosMove last_move, Args &&...args) {
     for (uint move = 0; move < BOARD_AREA; ++move) {
         if (move) {
             std::cin >> str;
+            std::cerr << str << '\n';
             Colour colour = str[0] - '0';
             auto pos = read_position(str + 1);
 
@@ -57,6 +60,7 @@ void start_as_order(Board::ChaosMove last_move, Args &&...args) {
 void start_console_game() {
     std::string s;
     std::cin >> s;
+    std::cerr << s << '\n';
 
     if (std::isdigit(s[0])) start_as_order<mcts::MoveMaker>({read_position(std::string_view(s).substr(1, 2)), Colour(s[0] - '0')});
     else start_as_chaos<mcts::MoveMaker>();
