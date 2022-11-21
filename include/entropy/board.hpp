@@ -117,7 +117,8 @@ public:
         bool vertical{};
 
         struct Compact {
-            uint16_t data{};
+            constexpr static inline uint16_t PASS_VALUE = std::numeric_limits<uint16_t>::max();
+            uint16_t data = PASS_VALUE;
 
             Compact() = default;
 
@@ -127,11 +128,12 @@ public:
                                                m.vertical) {}
 
             [[nodiscard]] OrderMove create() const {
-                return OrderMove{
-                        data >> 10,
-                        Position::IntType(data & 0b1111110000) >> 4,
-                        Position::IntType(data & 0b0000001110) >> 1,
-                        bool(data & 1)};
+                return (data == PASS_VALUE) ? OrderMove{}
+                                            : OrderMove{
+                                                      data >> 10,
+                                                      Position::IntType(data & 0b1111110000) >> 4,
+                                                      Position::IntType(data & 0b0000001110) >> 1,
+                                                      bool(data & 1)};
             }
         };
 

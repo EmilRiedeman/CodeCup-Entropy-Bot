@@ -12,6 +12,7 @@ OrderNode::OrderNode(
 }
 
 void OrderNode::init() {
+    unvisited = 1;
     board.for_each_possible_order_move([this](auto &&x) {
         moves[unvisited++] = Board::OrderMove::Compact(x);
     });
