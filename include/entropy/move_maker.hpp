@@ -27,8 +27,8 @@ public:
 
 class RandomChaos final : public ChaosMoveMaker {
 public:
-    explicit RandomChaos(uint seed) : gen(seed) {
-        std::cerr << "Seed: " << seed << '\n';
+    RandomChaos() {
+        std::cerr << "Seed: " << gen.seed << '\n';
     }
 
     Board::ChaosMove suggest_move(Colour colour) override {
@@ -53,13 +53,13 @@ public:
 
 private:
     Board board;
-    std::mt19937 gen;
+    FastRand gen{};
 };
 
 class RandomOrder final : public OrderMoveMaker {
 public:
-    explicit RandomOrder(uint seed) : gen(seed) {
-        std::cerr << "Seed: " << seed << '\n';
+    RandomOrder() {
+        std::cerr << "Seed: " << gen.seed << '\n';
     }
 
     Board::OrderMove suggest_move() override {
@@ -84,7 +84,7 @@ public:
 
 private:
     Board board;
-    std::mt19937 gen;
+    FastRand gen;
 };
 
 }// namespace entropy
