@@ -31,6 +31,8 @@ inline void print_board(const Board &b, std::ostream &out = std::cerr) {
         out << '\n';
     }
     out << ' ';
+    for (uint column = 0; column < BOARD_SIZE; ++column) out << " =";
+    out << "\n ";
     for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << b.get_vertical_score()[column] / 10;
     out << "\n ";
     for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << b.get_vertical_score()[column] % 10;
