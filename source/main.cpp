@@ -18,7 +18,9 @@ int main(int argc, const char *args[]) {
             benchmark_mcts_ponder();
         }
         if (!std::strcmp(args[1], "competition")) {
-            simulate_game(mcts::MMChaos(), RandomOrder());
+            simulate_game(mcts::MoveMaker(), mcts::MoveMaker());
+            simulate_game(RandomMoveMaker(), mcts::MoveMaker());
+            simulate_game(mcts::MoveMaker(), RandomMoveMaker());
         }
     }
     return 0;

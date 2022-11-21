@@ -30,7 +30,7 @@ ChaosNode *OrderNode::add_random_child() {
 ChaosNode *OrderNode::select_child() const {
     const auto logN = std::log(float(total_visits));
     return select_child_helper(children, [&logN](const auto &node) {
-        return uct_score(node.avg_score(), logN, float(node.total_visits));
+        return uct_score(node.avg_score(), logN, float(node.total_visits), 2);
     });
 }
 
@@ -78,7 +78,7 @@ OrderNode *ChaosNode::add_random_child(Colour colour) {
 OrderNode *ChaosNode::select_child(Colour colour) const {
     const auto logN = std::log(float(total_visits));
     return select_child_helper(children[colour - 1], [&logN](const auto &node) {
-        return uct_score(node.avg_score(), logN, float(node.total_visits));
+        return uct_score(node.avg_score(), logN, float(node.total_visits), 3);
     });
 }
 
@@ -115,6 +115,8 @@ inline void tree_search_helper(OrderNode *o_node) {
 }
 
 void tree_search_order(OrderNode &root, uint rollouts) {
+    root.set_as_root();
+
     while (root.can_add_child()) root.add_random_child()->rollout();
 
     for (uint i = 0; i < rollouts; ++i) {

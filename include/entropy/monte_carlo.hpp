@@ -9,7 +9,7 @@ namespace entropy::mcts {
 
 extern FastRand RNG;
 
-class MMChaos;
+class MoveMaker;
 
 class OrderNode;
 class ChaosNode;
@@ -18,8 +18,8 @@ inline uint rollout_board(const Board &b) {
     return b.get_total_score();
 }
 
-inline float uct_score(float s, float logN, float n, float temperature = 1.5) {
-    return s * temperature * std::sqrt(logN / n);
+inline float uct_score(float s, float logN, float n, float temperature) {
+    return s + temperature * std::sqrt(logN / n);
 }
 
 void tree_search_order(OrderNode &root, uint rollouts);
@@ -93,7 +93,7 @@ private:
     uint unvisited{};
 
     friend ChaosNode;
-    friend MMChaos;
+    friend MoveMaker;
 };
 
 class ChaosNode {
@@ -170,24 +170,30 @@ private:
     std::array<uint8_t, ChipPool::N> unvisited{};
 
     friend OrderNode;
-    friend MMChaos;
+    friend MoveMaker;
 };
 
-class MMChaos final : public ChaosMoveMaker {
+class MoveMaker final : public entropy::MoveMaker {
 public:
-    MMChaos() {
+    MoveMaker() {
         std::cerr << "MCTS Seed: " << RNG.seed << '\n';
     }
 
-    Board::ChaosMove suggest_move(Colour colour) override {
+    Board::ChaosMove suggest_chaos_move(Colour colour) override {
         if (!chaos_node) chaos_node = std::make_unique<ChaosNode>(board, chip_pool);
-        else {
-            chaos_node->clear_colours(uint(colour));
-        }
+        else chaos_node->clear_colours(uint(colour));
         std::cerr << "Already visited " << chaos_node->total_visits << " times in current node\n";
 
         tree_search_chaos(*chaos_node, colour, rollouts);
         return chaos_node->select_move(colour);
+    }
+
+    Board::OrderMove suggest_order_move() override {
+        if (!order_node) order_node = std::make_unique<OrderNode>(board, chip_pool);
+        std::cerr << "Already visited " << order_node->total_visits << " times in current node\n";
+
+        tree_search_order(*order_node, rollouts);
+        return order_node->select_move();
     }
 
     void register_chaos_move(const Board::ChaosMove &move) override {

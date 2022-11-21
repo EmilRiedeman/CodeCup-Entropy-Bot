@@ -23,7 +23,7 @@ void start_as_chaos(Args &&...args) {
         }
         std::cin >> c;
 
-        auto m = chaos.suggest_move(c);
+        auto m = chaos.suggest_chaos_move(c);
         chaos.register_chaos_move(m);
 
         print_position(m.pos, std::cout);
@@ -45,7 +45,7 @@ void start_as_order(Board::ChaosMove last_move, Args &&...args) {
             last_move = Board::ChaosMove{pos, colour};
             order.register_chaos_move(last_move);
         }
-        auto m = order.suggest_move();
+        auto m = order.suggest_order_move();
         order.register_order_move(m);
 
         print_position(m.is_pass() ? last_move.pos : m.from, std::cout);
@@ -58,8 +58,8 @@ void start_console_game() {
     std::string s;
     std::cin >> s;
 
-    if (std::isdigit(s[0])) start_as_order<RandomOrder>({read_position(std::string_view(s).substr(1, 2)), Colour(s[0] - '0')});
-    else start_as_chaos<mcts::MMChaos>();
+    if (std::isdigit(s[0])) start_as_order<RandomMoveMaker>({read_position(std::string_view(s).substr(1, 2)), Colour(s[0] - '0')});
+    else start_as_chaos<mcts::MoveMaker>();
 }
 
 }// namespace entropy
