@@ -5,7 +5,7 @@
 
 namespace entropy {
 
-template <typename CHAOS, typename ORDER>
+template <bool PRINT = false, typename CHAOS, typename ORDER>
 inline uint simulate_game(CHAOS &&chaos, ORDER &&order) {
     Board b;
     FastRand rand{};
@@ -22,13 +22,16 @@ inline uint simulate_game(CHAOS &&chaos, ORDER &&order) {
         chaos.register_chaos_move(chaos_move);
         order.register_chaos_move(chaos_move);
 
+        if constexpr (PRINT) print_board(b);
+
         auto order_move = std::forward<ORDER>(order).suggest_order_move();
 
         b.move_chip(order_move);
         chaos.register_order_move(order_move);
         order.register_order_move(order_move);
+
+        if constexpr (PRINT) print_board(b);
     }
-    print_board(b);
 
     return b.get_total_score();
 }

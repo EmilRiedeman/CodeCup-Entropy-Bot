@@ -14,7 +14,7 @@ int main(int argc, const char *args[]) {
             benchmark_simulated_game();
         }
         if (!std::strcmp(args[1], "competition")) {
-            simulate_game(mcts::MoveMaker(), mcts::MoveMaker());
+            simulate_game<true>(mcts::MoveMaker(), mcts::MoveMaker());
             simulate_game(RandomMoveMaker(), mcts::MoveMaker());
             simulate_game(mcts::MoveMaker(), RandomMoveMaker());
         }

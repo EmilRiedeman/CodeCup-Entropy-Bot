@@ -231,7 +231,7 @@ private:
     std::unique_ptr<OrderNode> order_node{};
     std::unique_ptr<ChaosNode> chaos_node{};
 
-    uint rollouts = 350000;
+    uint rollouts = 1'000'000;
 };
 
 

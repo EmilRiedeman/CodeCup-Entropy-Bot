@@ -15,9 +15,9 @@ struct FastRand {
         return seed >> 17;
     }
 
-    [[nodiscard]] constexpr result_type min() const { return 0; }
+    [[nodiscard]] constexpr static result_type min() { return 0; }
 
-    [[nodiscard]] constexpr result_type max() const { return std::numeric_limits<int16_t>::max(); }
+    [[nodiscard]] constexpr static result_type max() { return std::numeric_limits<int16_t>::max(); }
 };
 
 template <uint N>
