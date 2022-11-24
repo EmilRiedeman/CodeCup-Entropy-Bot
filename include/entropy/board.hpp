@@ -107,13 +107,6 @@ public:
         }
     };
 
-    void place_chip(const ChaosMove &move) {
-        cells[move.pos.index()] = move.colour;
-        update_score_row(move.pos.row());
-        update_score_column(move.pos.column());
-        --open_cells;
-    }
-
     struct OrderMove {
         Position from{};
         Position::IntType t_index = Position::NONE_VALUE;
@@ -166,6 +159,13 @@ public:
         [[nodiscard]] bool is_pass() const { return t_index == Position::NONE_VALUE; }
     };
 
+    void place_chip(const ChaosMove &move) {
+        cells[move.pos.index()] = move.colour;
+        update_score_row(move.pos.row());
+        update_score_column(move.pos.column());
+        --open_cells;
+    }
+
     void move_chip(const OrderMove &move) {
         if (move.is_pass()) return;
         if (move.vertical) move_chip<true>(move.from, move.t_index, move.change);
@@ -181,8 +181,8 @@ public:
         cells[t_index] = cells[f_index];
         cells[f_index] = 0;
 
-        update_score_row(f_row);
-        update_score_column(f_column);
+        if (!VERTICAL || horizontal_score[f_row]) update_score_row(f_row);
+        if (VERTICAL || vertical_score[f_column]) update_score_column(f_column);
 
         if constexpr (VERTICAL) update_score_row(x);
         else update_score_column(x);
