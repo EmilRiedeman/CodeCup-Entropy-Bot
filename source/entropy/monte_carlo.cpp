@@ -27,7 +27,7 @@ ChaosNode *OrderNode::add_random_child() {
     return children.back().get();
 }
 
-ChaosNode *OrderNode::select_child(float uct_temperature) const {
+ChaosNode *OrderNode::select_child(const float uct_temperature) const {
     const auto logN = std::log(float(total_visits));
     return select_child_helper(children, [=](const auto &node) {
         return uct_score(node.avg_score(), logN, float(node.total_visits), uct_temperature);
@@ -75,7 +75,7 @@ OrderNode *ChaosNode::add_random_child(Colour colour) {
     return children[colour - 1].back().get();
 }
 
-OrderNode *ChaosNode::select_child(Colour colour, float uct_temperature) const {
+OrderNode *ChaosNode::select_child(Colour colour, const float uct_temperature) const {
     const auto logN = std::log(float(visits[colour - 1]));
     return select_child_helper(children[colour - 1], [=](const auto &node) {
         return uct_score(node.avg_score(), logN, float(node.total_visits), uct_temperature);
@@ -96,7 +96,7 @@ void ChaosNode::record_score(uint score) {
     if (parent) parent->record_score(score);
 }
 
-inline void tree_search_helper(OrderNode *o_node, float uct_temperature) {
+inline void tree_search_helper(OrderNode *o_node, const float uct_temperature) {
     while (true) {
         if (o_node->can_add_child()) {
             o_node->add_random_child()->rollout();
@@ -114,7 +114,7 @@ inline void tree_search_helper(OrderNode *o_node, float uct_temperature) {
     }
 }
 
-void tree_search_order(OrderNode &root, uint rollouts, float uct_temperature) {
+void tree_search_order(OrderNode &root, uint rollouts, const float uct_temperature) {
     root.set_as_root();
 
     while (root.can_add_child()) root.add_random_child()->rollout();
@@ -124,7 +124,7 @@ void tree_search_order(OrderNode &root, uint rollouts, float uct_temperature) {
     }
 }
 
-void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts, float uct_temperature) {
+void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts, const float uct_temperature) {
     if (root.is_terminal()) return;
     root.set_as_root();
 
