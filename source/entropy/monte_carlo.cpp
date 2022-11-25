@@ -124,7 +124,7 @@ void tree_search_order(OrderNode &root, uint rollouts, float uct_temperature) {
     }
 }
 
-void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts, float uct_temperature = 1.5) {
+void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts, float uct_temperature) {
     if (root.is_terminal()) return;
     root.set_as_root();
 
