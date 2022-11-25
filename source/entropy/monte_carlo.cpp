@@ -27,10 +27,10 @@ ChaosNode *OrderNode::add_random_child() {
     return children.back().get();
 }
 
-ChaosNode *OrderNode::select_child() const {
+ChaosNode *OrderNode::select_child(float uct_temperature) const {
     const auto logN = std::log(float(total_visits));
-    return select_child_helper(children, [&logN](const auto &node) {
-        return uct_score(node.avg_score(), logN, float(node.total_visits), 1.5);
+    return select_child_helper(children, [=](const auto &node) {
+        return uct_score(node.avg_score(), logN, float(node.total_visits), uct_temperature);
     });
 }
 
@@ -75,10 +75,10 @@ OrderNode *ChaosNode::add_random_child(Colour colour) {
     return children[colour - 1].back().get();
 }
 
-OrderNode *ChaosNode::select_child(Colour colour) const {
+OrderNode *ChaosNode::select_child(Colour colour, float uct_temperature) const {
     const auto logN = std::log(float(visits[colour - 1]));
-    return select_child_helper(children[colour - 1], [&logN](const auto &node) {
-        return uct_score(node.avg_score(), logN, float(node.total_visits), 1.5);
+    return select_child_helper(children[colour - 1], [=](const auto &node) {
+        return uct_score(node.avg_score(), logN, float(node.total_visits), uct_temperature);
     });
 }
 
@@ -96,13 +96,13 @@ void ChaosNode::record_score(uint score) {
     if (parent) parent->record_score(score);
 }
 
-inline void tree_search_helper(OrderNode *o_node) {
+inline void tree_search_helper(OrderNode *o_node, float uct_temperature) {
     while (true) {
         if (o_node->can_add_child()) {
             o_node->add_random_child()->rollout();
             break;
         }
-        auto c_node = o_node->select_child();
+        auto c_node = o_node->select_child(uct_temperature);
         auto random_colour = c_node->random_colour();
 
         if (c_node->is_terminal() || c_node->can_add_child(random_colour)) {
@@ -110,28 +110,28 @@ inline void tree_search_helper(OrderNode *o_node) {
             else c_node->rollout();
             break;
         }
-        o_node = c_node->select_child(random_colour);
+        o_node = c_node->select_child(random_colour, uct_temperature);
     }
 }
 
-void tree_search_order(OrderNode &root, uint rollouts) {
+void tree_search_order(OrderNode &root, uint rollouts, float uct_temperature) {
     root.set_as_root();
 
     while (root.can_add_child()) root.add_random_child()->rollout();
 
     for (uint i = 0; i < rollouts; ++i) {
-        tree_search_helper(&root);
+        tree_search_helper(&root, uct_temperature);
     }
 }
 
-void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts) {
+void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts, float uct_temperature = 1.5) {
     if (root.is_terminal()) return;
     root.set_as_root();
 
     while (root.can_add_child(c)) root.add_random_child(c)->rollout();
 
     for (uint i = 0; i < rollouts; ++i) {
-        tree_search_helper(root.select_child(c));
+        tree_search_helper(root.select_child(c, uct_temperature), uct_temperature);
     }
 }
 

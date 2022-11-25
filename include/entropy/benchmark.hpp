@@ -73,6 +73,7 @@ inline void benchmark_mcts_ponder() {
         tree_search_chaos(node, 1, ROLLOUTS);
     }
     print_position(node.select_move(1).pos, std::cerr);
+    std::cerr << '\n';
 }
 
 inline void benchmark_simulated_game() {

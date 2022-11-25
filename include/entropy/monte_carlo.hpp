@@ -22,8 +22,8 @@ inline float uct_score(float s, float logN, float n, float temperature) {
     return s + temperature * std::sqrt(logN / n);
 }
 
-void tree_search_order(OrderNode &root, uint rollouts);
-void tree_search_chaos(ChaosNode &node, Colour c, uint rollouts);
+void tree_search_order(OrderNode &root, uint rollouts, float uct_temperature);
+void tree_search_chaos(ChaosNode &node, Colour c, uint rollouts, float uct_temperature);
 
 template <typename T, typename F>
 inline T *select_child_helper(const std::vector<std::unique_ptr<T>> &vec, F &&evaluator) {
@@ -64,7 +64,7 @@ public:
 
     ChaosNode *add_random_child();
 
-    ChaosNode *select_child() const;
+    ChaosNode *select_child(float uct_temperature) const;
 
     Board::OrderMove select_move() const;
 
@@ -72,7 +72,7 @@ public:
 
     [[nodiscard]] bool can_add_child() const { return unvisited; }
 
-    [[nodiscard]] float avg_score() const { return 5 - float(total_score) / 80 / float(total_visits); }
+    [[nodiscard]] float avg_score() const { return -float(total_score) / 80 / float(total_visits); }
 
 private:
     void init();
@@ -89,7 +89,7 @@ private:
     uint total_visits{};
     uint total_score{};
 
-    std::array<Board::OrderMove::Compact, 108> moves{};// not safe size maybe ???
+    std::array<Board::OrderMove::Compact, 110> moves{};// not safe size maybe ???
     uint unvisited{};
 
     friend ChaosNode;
@@ -120,7 +120,7 @@ public:
 
     OrderNode *add_random_child(Colour colour);
 
-    OrderNode *select_child(Colour colour) const;
+    OrderNode *select_child(Colour colour, float uct_temperature) const;
 
     Board::ChaosMove select_move(Colour colour) const;
 
@@ -184,7 +184,7 @@ public:
         else chaos_node->clear_colours(uint(colour));
         //std::cerr << chaos_node->total_visits << "\n";
 
-        tree_search_chaos(*chaos_node, colour, rollouts);
+        tree_search_chaos(*chaos_node, colour, rollouts, uct_temperature);
         return chaos_node->select_move(colour);
     }
 
@@ -192,7 +192,7 @@ public:
         if (!order_node) order_node = std::make_unique<OrderNode>(board, chip_pool);
         //std::cerr << order_node->total_visits << "\n";
 
-        tree_search_order(*order_node, rollouts);
+        tree_search_order(*order_node, rollouts, uct_temperature);
         return order_node->select_move();
     }
 
@@ -232,6 +232,7 @@ private:
     std::unique_ptr<ChaosNode> chaos_node{};
 
     uint rollouts = 1'000'000;
+    float uct_temperature = 3.5;
 };
 
 
