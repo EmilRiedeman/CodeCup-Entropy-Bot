@@ -72,13 +72,14 @@ class Board {
 public:
     using BoardString = String<BOARD_COLOURS>;
     using CellArray = std::array<Colour, BOARD_AREA>;
-    using ScoreArray = std::array<uint, BOARD_SIZE>;
+    using ScoreIntType = uint8_t;
+    using ScoreArray = std::array<ScoreIntType, BOARD_SIZE>;
     using CellIterator = CellArray::pointer;
     using ConstCellIterator = CellArray::const_pointer;
 
     constexpr static inline auto SCORE_LOOKUP_TABLE = score_lookup_table<BOARD_COLOURS, BOARD_SIZE>();
 
-    static constexpr uint lookup_score(BoardString s) {
+    static constexpr ScoreIntType lookup_score(BoardString s) {
         return SCORE_LOOKUP_TABLE[s];
     }
 
@@ -220,8 +221,8 @@ private:
                      get_sorted_string<BOARD_COLOURS, BOARD_SIZE, BOARD_SIZE>(get_column_iterator(column)));
     }
 
-    void update_score(uint &old_score, BoardString s) {
-        Colour new_score = lookup_score(s);
+    void update_score(ScoreIntType &old_score, BoardString s) {
+        auto new_score = lookup_score(s);
         total_score += new_score - old_score;
         old_score = new_score;
     }
@@ -251,10 +252,11 @@ private:
     }
 
     CellArray cells{};
-    Colour open_cells = BOARD_AREA;
 
     ScoreArray vertical_score{};
     ScoreArray horizontal_score{};
+
+    uint open_cells = BOARD_AREA;
     uint total_score = 0;
 };
 
