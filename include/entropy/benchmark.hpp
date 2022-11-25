@@ -63,7 +63,7 @@ inline void benchmark_rng() {
     benchmark_return_value<N>("std::mt19937 generator", gen2);
 }
 
-template <std::size_t ROLLOUTS = 1'000'000>
+template <std::size_t ROLLOUTS = 10'000'000>
 inline void benchmark_mcts_ponder() {
     using namespace mcts;
     Board b;

@@ -31,13 +31,20 @@ struct NumberString {
 };
 
 template <uint C, uint N, std::ptrdiff_t STEP, typename ConstIterator>
-constexpr decltype(auto) get_sorted_string(ConstIterator begin) {
-    uint translate[C]{1};
+constexpr NumberString<C> get_sorted_string(ConstIterator it) {
+    uint translate[C]{};
+
+    uint &next_number = translate[0];
+    next_number = 1;
+
     NumberString<C> s{};
-    for (uint i = 0; i < N; ++i, begin += STEP) {
-        if (*begin) {
-            if (!translate[*begin]) translate[*begin] = translate[0]++;
-            s.add(i, translate[*begin]);
+    for (uint i = 0; i < N; ++i, it += STEP) {
+        if (*it) {
+            if (i - 2 < N && *(it - STEP * 2) != 0 && *(it - STEP) == 0) {
+                s.add(i - 1, translate[0]++);
+            }
+            if (!translate[*it]) translate[*it] = next_number++;
+            s.add(i, translate[*it]);
         }
     }
     return s;

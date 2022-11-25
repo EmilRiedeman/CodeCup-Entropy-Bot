@@ -232,7 +232,7 @@ private:
     std::unique_ptr<ChaosNode> chaos_node{};
 
     uint rollouts = 100'000;
-    float uct_temperature = 3.5;
+    float uct_temperature = 1.5;
 };
 
 
