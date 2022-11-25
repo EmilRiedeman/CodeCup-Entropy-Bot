@@ -198,7 +198,7 @@ public:
 
     void register_chaos_move(const Board::ChaosMove &move) override {
         board.place_chip(move);
-        //print_board(board);
+        //show_board(board);
         chip_pool = ChipPool(chip_pool, move.colour);
 
         if (chaos_node) {
@@ -213,7 +213,7 @@ public:
 
     void register_order_move(const Board::OrderMove &move) override {
         board.move_chip(move);
-        //print_board(board);
+        //show_board(board);
 
         if (order_node) {
             auto ptr = order_node->get_child(move);
@@ -231,7 +231,7 @@ private:
     std::unique_ptr<OrderNode> order_node{};
     std::unique_ptr<ChaosNode> chaos_node{};
 
-    uint rollouts = 1'000'000;
+    uint rollouts = 100'000;
     float uct_temperature = 3.5;
 };
 

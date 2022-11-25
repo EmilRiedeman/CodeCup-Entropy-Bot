@@ -22,7 +22,7 @@ inline uint simulate_game(CHAOS &&chaos, ORDER &&order) {
         chaos.register_chaos_move(chaos_move);
         order.register_chaos_move(chaos_move);
 
-        if constexpr (PRINT) print_board(b);
+        if constexpr (PRINT) show_board(b);
 
         auto order_move = std::forward<ORDER>(order).suggest_order_move();
 
@@ -30,8 +30,9 @@ inline uint simulate_game(CHAOS &&chaos, ORDER &&order) {
         chaos.register_order_move(order_move);
         order.register_order_move(order_move);
 
-        if constexpr (PRINT) print_board(b);
+        if constexpr (PRINT) show_board(b);
     }
+    std::cerr << b.get_total_score() << '\n';
 
     return b.get_total_score();
 }

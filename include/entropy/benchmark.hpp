@@ -72,8 +72,7 @@ inline void benchmark_mcts_ponder() {
         Timer t("Monte Carlo tree search ponder");
         tree_search_chaos(node, 1, ROLLOUTS);
     }
-    print_position(node.select_move(1).pos, std::cerr);
-    std::cerr << '\n';
+    std::cerr << node.select_move(1).pos << '\n';
 }
 
 inline void benchmark_simulated_game() {

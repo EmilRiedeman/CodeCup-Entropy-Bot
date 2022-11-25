@@ -7,16 +7,29 @@
 
 namespace entropy {
 
-template <uint N, uint C>
-inline void print_string(String<C> s, std::ostream &out = std::cerr) {
-    for (auto &x : s.template to_array<N>()) out << x;
+inline std::ostream &operator<<(std::ostream &out, uint8_t x) { return out << uint(x); }
+
+constexpr char *position_to_string(Position p, char *dest) {
+    dest[0] = char('A' + p.row());
+    dest[1] = char('a' + p.column());
+    return dest;
 }
 
-inline void print_position(Position p, std::ostream &out = std::cout) { out << char('A' + p.row()) << char('a' + p.column()); }
+inline Position position_from_string(std::string_view str) { return {uint(str[0] - 'A'), uint(str[1] - 'a')}; }
 
-inline Position read_position(std::string_view str) { return {uint(str[0] - 'A'), uint(str[1] - 'a')}; }
+inline std::ostream &operator<<(std::ostream &out, Position p) {
+    char str[3]{};
+    return out << position_to_string(p, str);
+}
 
-inline void print_board(const Board &b, std::ostream &out = std::cerr) {
+inline std::istream &operator>>(std::istream &in, Position &p) {
+    char str[3]{};
+    in >> str;
+    p = position_from_string(str);
+    return in;
+}
+
+inline void show_board(const Board &b, std::ostream &out = std::cerr) {
     out << ' ';
     for (char c = 'a'; c < char('a' + BOARD_SIZE); ++c) out << ' ' << c;
     out << '\n';
