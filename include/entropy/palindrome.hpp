@@ -6,17 +6,17 @@
 namespace entropy {
 
 template <uint C>
-struct String {
+struct NumberString {
     static constexpr auto POWER_TABLE = generate_array<32>([](auto x, auto) { return int_pow<C>(x); });
 
     uint hash;
 
-    constexpr String() = default;
-    constexpr String(uint x) : hash(x) {}
+    constexpr NumberString() = default;
+    constexpr NumberString(uint x) : hash(x) {}
 
     [[nodiscard]] constexpr uint read(uint index) const { return (hash / POWER_TABLE[index]) % C; }
 
-    constexpr String add_copy(uint i, uint c) const { return {hash + POWER_TABLE[i] * c}; }
+    constexpr NumberString add_copy(uint i, uint c) const { return {hash + POWER_TABLE[i] * c}; }
 
     constexpr void add(uint i, uint c) { hash += POWER_TABLE[i] * c; }
 
@@ -33,7 +33,7 @@ struct String {
 template <uint C, uint N, std::ptrdiff_t STEP, typename ConstIterator>
 constexpr decltype(auto) get_sorted_string(ConstIterator begin) {
     uint translate[C]{1};
-    String<C> s{};
+    NumberString<C> s{};
     for (uint i = 0; i < N; ++i, begin += STEP) {
         if (*begin) {
             if (!translate[*begin]) translate[*begin] = translate[0]++;
@@ -44,7 +44,7 @@ constexpr decltype(auto) get_sorted_string(ConstIterator begin) {
 }
 
 template <uint C>
-constexpr inline uint8_t count(String<C> string, uint left, uint right, const uint begin, const uint end) {
+constexpr inline uint8_t count(NumberString<C> string, uint left, uint right, const uint begin, const uint end) {
     uint8_t score = 0;
     for (; left + 1 > begin && right <= end; --left, ++right) {
         if (string.read(left) == string.read(right)) score += uint8_t(right - left + 1);
@@ -54,7 +54,7 @@ constexpr inline uint8_t count(String<C> string, uint left, uint right, const ui
 }
 
 template <uint C>
-constexpr inline uint8_t score_string(String<C> string, const uint begin, const uint end) {
+constexpr inline uint8_t score_string(NumberString<C> string, const uint begin, const uint end) {
     uint8_t score = 0;
     for (uint i = begin; i < end; ++i) {
         score += count<C>(string, i - 1, i + 1, begin, end);
@@ -66,7 +66,7 @@ constexpr inline uint8_t score_string(String<C> string, const uint begin, const 
 template <uint C, uint STOP, uint N>
 constexpr void compute_score_table(
         std::array<std::uint8_t, N> &table,
-        String<C> cur_sequence = {},
+        NumberString<C> cur_sequence = {},
         uint colours = 1,
         uint begin = 0,
         uint end = 0,

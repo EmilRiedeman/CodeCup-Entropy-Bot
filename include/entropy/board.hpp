@@ -70,7 +70,7 @@ struct ChipPool {
 
 class Board {
 public:
-    using BoardString = String<BOARD_COLOURS>;
+    using BoardString = NumberString<BOARD_COLOURS>;
     using CellArray = std::array<Colour, BOARD_AREA>;
     using ScoreIntType = uint8_t;
     using ScoreArray = std::array<ScoreIntType, BOARD_SIZE>;
