@@ -6,9 +6,6 @@
 
 int main(int argc, const char *args[]) {
     using namespace entropy;
-    constexpr bool x = std::is_integral_v<unsigned char>;
-    if (x) {
-    }
 
     if (argc == 1) {
         start_console_game();
