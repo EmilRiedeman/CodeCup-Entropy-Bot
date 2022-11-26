@@ -41,7 +41,7 @@ constexpr NumberString<C> get_sorted_string(ConstIterator it) {
     for (uint i = 0; i < N; ++i, it += STEP) {
         if (*it) {
             if (i - 2 < N && *(it - STEP * 2) != 0 && *(it - STEP) == 0) {
-                s.add(i - 1, translate[0]++);
+                s.add(i - 1, next_number++);
             }
             if (!translate[*it]) translate[*it] = next_number++;
             s.add(i, translate[*it]);

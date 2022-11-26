@@ -244,7 +244,6 @@ public:
 
     template <bool VERTICAL>
     void move_chip(Position from, Position to, uint x) {
-        const auto f_index = from.index();
         const auto f_row = from.row();
         const auto f_column = from.column();
 
