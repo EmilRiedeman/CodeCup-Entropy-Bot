@@ -95,17 +95,30 @@ inline void benchmark_rng() {
  * 47531ms
  * 47831ms
  * 47838ms
+ *
+ * vector instead of array for moves
+ * 51009ms
  */
-template <std::size_t ROLLOUTS = 2'000'000>
+template <std::size_t ROLLOUTS = 2'000'000, std::size_t N = 10>
 inline void benchmark_mcts_ponder() {
     using namespace mcts;
+    FastRand rand{0};
     BoardState b;
+    ChipPool pool;
+    RandomMoveMaker rando{0};
+    for (uint i = 0; i < 15; ++i) {
+        Colour c = pool.random_chip(rand);
+        auto m = rando.suggest_chaos_move(c);
+        b.place_chip(m);
+        rando.register_chaos_move(m);
+    }
+
     {
         mcts::RNG.seed = 0;
 
         Timer t("Monte Carlo tree search ponder");
-        for (uint i = 0; i < 10; ++i) {
-            ChaosNode node(b, ChipPool{});
+        for (uint i = 0; i < N; ++i) {
+            ChaosNode node(b, pool);
             tree_search_chaos(node, 1, ROLLOUTS);
         }
     }

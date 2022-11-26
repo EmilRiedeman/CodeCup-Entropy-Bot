@@ -20,9 +20,9 @@ public:
 
 class RandomMoveMaker final : public MoveMaker {
 public:
-    RandomMoveMaker() {
-        std::cerr << "Seed: " << gen.seed << '\n';
-    }
+    explicit RandomMoveMaker(uint seed) : gen{seed} { std::cerr << "RandomMoveMaker Seed: " << gen.seed << '\n'; }
+
+    RandomMoveMaker() : RandomMoveMaker(std::random_device()()) {}
 
     ChaosMove suggest_chaos_move(Colour colour) override {
         const uint r = std::uniform_int_distribution<uint>(0, board.get_open_cells() - 1)(gen);
@@ -41,7 +41,7 @@ public:
             possible_moves.emplace_back(OrderMove{from, to, x, vert});
         });
 
-        return possible_moves[std::uniform_int_distribution<uint>(0, possible_moves.size() - 1)(gen)];
+        return *random_element(possible_moves.begin(), possible_moves.size(), gen);
     }
 
     void register_chaos_move(const ChaosMove &move) override { board.place_chip(move); }

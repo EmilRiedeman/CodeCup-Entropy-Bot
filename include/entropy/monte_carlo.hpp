@@ -88,7 +88,7 @@ private:
     BoardState board;
     const ChipPool pool;
     ChaosNode *parent{};
-    std::vector<std::unique_ptr<ChaosNode>> children{};
+    std::vector<std::unique_ptr<ChaosNode>> children;
 
     const ChaosMove last_move{};
 
@@ -128,9 +128,9 @@ public:
 
     OrderNode *add_random_child(Colour colour);
 
-    OrderNode *select_child(Colour colour, float uct_temperature) const;
+    [[nodiscard]] OrderNode *select_child(Colour colour, float uct_temperature) const;
 
-    ChaosMove select_move(Colour colour) const;
+    [[nodiscard]] ChaosMove select_move(Colour colour) const;
 
     void rollout() { record_score(rollout_board(board)); }
 
@@ -140,7 +140,7 @@ public:
 
     [[nodiscard]] bool is_terminal() const { return !board.get_open_cells(); }
 
-    Colour random_colour() const { return pool.random_chip(RNG); }
+    [[nodiscard]] Colour random_colour() const { return pool.random_chip(RNG); }
 
     void clear_colours(uint keep) {
         for (uint c = 0; c < children.size(); ++c) {
@@ -163,7 +163,7 @@ private:
     void record_score(uint score);
 
     BoardState board;
-    const ChipPool pool;
+    const ChipPool &pool;
     OrderNode *parent{};
     std::array<std::vector<std::unique_ptr<OrderNode>>, ChipPool::N> children{};
 

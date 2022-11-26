@@ -17,16 +17,16 @@ void OrderNode::init() {
     board.get_minimal_state().for_each_possible_order_move([this](auto a, auto b, auto c, auto d) {
         moves[unvisited++] = OrderMove::Compact({a, b, c, d});
     });
+
     children.reserve(std::max(unvisited / 2, 1u));
 }
 
 ChaosNode *OrderNode::add_random_child() {
-    --unvisited;
-    auto it = moves.begin() + std::uniform_int_distribution<uint>{0, unvisited}(RNG);
-    auto end = moves.begin() + unvisited;
-    std::iter_swap(it, end);
+    auto it = random_element(moves.begin(), unvisited, RNG);
+    auto move = *it;
+    *it = moves[--unvisited];
 
-    children.push_back(std::make_unique<ChaosNode>(this, end->create()));
+    children.push_back(std::make_unique<ChaosNode>(this, move.create()));
     return children.back().get();
 }
 
