@@ -25,22 +25,6 @@ inline float uct_score(float s, float logN, float n, float temperature) {
 void tree_search_order(OrderNode &root, uint rollouts, float uct_temperature = 5);
 void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts, float uct_temperature = 5);
 
-template <typename T, typename F>
-inline T *select_child_helper(const std::vector<std::unique_ptr<T>> &vec, F &&evaluator) {
-    auto best_score = std::forward<F>(evaluator)(*vec.front().get());
-    auto child = vec.front().get();
-
-    for (auto it = vec.begin() + 1; it != vec.end(); ++it) {
-        auto s = std::forward<F>(evaluator)(**it);
-        if (s > best_score) {
-            best_score = s;
-            child = it->get();
-        }
-    }
-
-    return child;
-}
-
 class OrderNode {
 public:
     OrderNode() = delete;

@@ -114,6 +114,10 @@ inline void benchmark_rng() {
  * 31195ms
  *
  * vector instead of array for moves
+ * slow
+ *
+ * array instead of vector for children
+ * slow
  *
  */
 template <std::size_t ROLLOUTS = 100'000, std::size_t N = 200>

@@ -4,6 +4,22 @@ namespace entropy::mcts {
 
 FastRand RNG{};
 
+template <typename T, typename F>
+inline T *select_child_helper(const std::vector<std::unique_ptr<T>> &vec, F &&evaluator) {
+    auto best_score = std::forward<F>(evaluator)(*vec.front());
+    auto child = vec.begin();
+
+    for (auto it = child + 1; it != vec.end(); ++it) {
+        auto s = std::forward<F>(evaluator)(**it);
+        if (s > best_score) {
+            best_score = s;
+            child = it;
+        }
+    }
+
+    return child->get();
+}
+
 OrderNode::OrderNode(
         ChaosNode *p,
         const ChaosMove &new_move) : board(p->board), pool(p->pool, new_move.colour), parent(p), last_move(new_move) {
