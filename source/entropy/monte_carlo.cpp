@@ -6,15 +6,15 @@ FastRand RNG{};
 
 OrderNode::OrderNode(
         ChaosNode *p,
-        const BoardState::ChaosMove &new_move) : board(p->board), pool(p->pool, new_move.colour), parent(p), last_move(new_move) {
+        const ChaosMove &new_move) : board(p->board), pool(p->pool, new_move.colour), parent(p), last_move(new_move) {
     board.place_chip(new_move);
     init();
 }
 
 void OrderNode::init() {
     unvisited = 1;
-    board.for_each_possible_order_move([this](auto &&x) {
-        moves[unvisited++] = BoardState::OrderMove::Compact(x);
+    board.get_minimal_state().for_each_possible_order_move([this](auto a, auto b, auto c, auto d) {
+        moves[unvisited++] = OrderMove::Compact({a, b, c, d});
     });
 }
 
@@ -34,7 +34,7 @@ ChaosNode *OrderNode::select_child(const float uct_temperature) const {
     });
 }
 
-BoardState::OrderMove OrderNode::select_move() const {
+OrderMove OrderNode::select_move() const {
     return select_child_helper(children, [](const auto &node) {
                return node.avg_score();
            })
@@ -54,14 +54,14 @@ void OrderNode::record_score(uint score) {
 }
 
 ChaosNode::ChaosNode(
-        OrderNode *p, const BoardState::OrderMove &new_move) : board(p->board), pool(p->pool), parent(p), last_move(new_move) {
+        OrderNode *p, const OrderMove &new_move) : board(p->board), pool(p->pool), parent(p), last_move(new_move) {
     board.move_chip(new_move);
     init();
 }
 
 void ChaosNode::init() {
     uint m = 0;
-    board.for_each_empty_space([this, &m](Position p) {
+    board.get_minimal_state().for_each_empty_space([this, &m](Position p) {
         moves[m++] = p.p;
     });
     unvisited.fill(m);
@@ -71,7 +71,7 @@ void ChaosNode::init() {
 OrderNode *ChaosNode::add_random_child(Colour colour) {
     children[colour - 1].push_back(std::make_unique<OrderNode>(
             this,
-            BoardState::ChaosMove{moves[--unvisited[colour - 1]], colour}));
+            ChaosMove{moves[--unvisited[colour - 1]], colour}));
     return children[colour - 1].back().get();
 }
 
@@ -82,7 +82,7 @@ OrderNode *ChaosNode::select_child(Colour colour, const float uct_temperature) c
     });
 }
 
-BoardState::ChaosMove ChaosNode::select_move(Colour colour) const {
+ChaosMove ChaosNode::select_move(Colour colour) const {
     return select_child_helper(children[colour - 1], [](const auto &node) {
                return node.avg_score();
            })

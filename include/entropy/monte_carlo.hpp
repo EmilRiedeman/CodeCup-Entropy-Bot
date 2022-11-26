@@ -51,11 +51,11 @@ public:
 
     OrderNode(
             ChaosNode *p,
-            const BoardState::ChaosMove &new_move);
+            const ChaosMove &new_move);
 
     void set_as_root() { parent = nullptr; }
 
-    std::unique_ptr<ChaosNode> *get_child(const BoardState::OrderMove &move) {
+    std::unique_ptr<ChaosNode> *get_child(const OrderMove &move) {
         auto it = std::find_if(children.begin(), children.end(),
                                [=](const auto &x) { return move == x->last_move; });
         if (it == children.end()) return nullptr;
@@ -66,7 +66,7 @@ public:
 
     ChaosNode *select_child(float uct_temperature) const;
 
-    BoardState::OrderMove select_move() const;
+    OrderMove select_move() const;
 
     void rollout() { record_score(rollout_board(board)); }
 
@@ -84,12 +84,12 @@ private:
     ChaosNode *parent{};
     std::vector<std::unique_ptr<ChaosNode>> children{};
 
-    const BoardState::ChaosMove last_move{};
+    const ChaosMove last_move{};
 
     uint total_visits{};
     uint total_score{};
 
-    std::array<BoardState::OrderMove::Compact, 110> moves{};// not safe size maybe ???
+    std::array<OrderMove::Compact, 110> moves{};// not safe size maybe ???
     uint unvisited{};
 
     friend ChaosNode;
@@ -106,11 +106,11 @@ public:
 
     ChaosNode(
             OrderNode *p,
-            const BoardState::OrderMove &new_move);
+            const OrderMove &new_move);
 
     void set_as_root() { parent = nullptr; }
 
-    std::unique_ptr<OrderNode> *get_child(const BoardState::ChaosMove &move) {
+    std::unique_ptr<OrderNode> *get_child(const ChaosMove &move) {
         auto &vec = children[move.colour - 1];
         auto it = std::find_if(vec.begin(), vec.end(),
                                [=](const auto &x) { return move.pos.p == x->last_move.pos.p; });
@@ -122,7 +122,7 @@ public:
 
     OrderNode *select_child(Colour colour, float uct_temperature) const;
 
-    BoardState::ChaosMove select_move(Colour colour) const;
+    ChaosMove select_move(Colour colour) const;
 
     void rollout() { record_score(rollout_board(board)); }
 
@@ -159,7 +159,7 @@ private:
     OrderNode *parent{};
     std::array<std::vector<std::unique_ptr<OrderNode>>, ChipPool::N> children{};
 
-    const BoardState::OrderMove last_move{};
+    const OrderMove last_move{};
 
     std::array<uint, ChipPool::N> visits{};
     uint total_visits{};
@@ -179,7 +179,7 @@ public:
         std::cerr << "MCTS Seed: " << RNG.seed << '\n';
     }
 
-    BoardState::ChaosMove suggest_chaos_move(Colour colour) override {
+    ChaosMove suggest_chaos_move(Colour colour) override {
         if (!chaos_node) chaos_node = std::make_unique<ChaosNode>(board, chip_pool);
         else chaos_node->clear_colours(uint(colour));
         //std::cerr << chaos_node->total_visits << "\n";
@@ -188,7 +188,7 @@ public:
         return chaos_node->select_move(colour);
     }
 
-    BoardState::OrderMove suggest_order_move() override {
+    OrderMove suggest_order_move() override {
         if (!order_node) order_node = std::make_unique<OrderNode>(board, chip_pool);
         //std::cerr << order_node->total_visits << "\n";
 
@@ -196,7 +196,7 @@ public:
         return order_node->select_move();
     }
 
-    void register_chaos_move(const BoardState::ChaosMove &move) override {
+    void register_chaos_move(const ChaosMove &move) override {
         board.place_chip(move);
         //show_board(board);
         chip_pool = ChipPool(chip_pool, move.colour);
@@ -211,7 +211,7 @@ public:
         }
     }
 
-    void register_order_move(const BoardState::OrderMove &move) override {
+    void register_order_move(const OrderMove &move) override {
         board.move_chip(move);
         //show_board(board);
 

@@ -9,14 +9,21 @@
 
 namespace entropy {
 
-using Colour = uint8_t;
-
 constexpr const inline uint BOARD_SIZE = 7;
 constexpr const inline uint BOARD_AREA = BOARD_SIZE * BOARD_SIZE;
 constexpr const inline uint BOARD_COLOURS = 8;
 constexpr const inline uint BOARD_CHIPS = BOARD_AREA / (BOARD_COLOURS - 1);
 
 static_assert(BOARD_CHIPS * (BOARD_COLOURS - 1) == BOARD_AREA);
+
+using Colour = uint8_t;
+using BoardString = NumberString<BOARD_COLOURS>;
+
+constexpr static inline auto SCORE_LOOKUP_TABLE = score_lookup_table<BOARD_COLOURS, BOARD_SIZE>();
+
+static constexpr uint8_t lookup_score(BoardString s) {
+    return SCORE_LOOKUP_TABLE[s];
+}
 
 struct Position {
     typedef uint IntType;
@@ -68,125 +75,92 @@ struct ChipPool {
     }
 };
 
-class BoardState {
+struct ChaosMove {
+    Position pos{};
+    Colour colour{};
+
+    bool operator==(const ChaosMove &m) const {
+        return pos.p == m.pos.p && colour == m.colour;
+    }
+};
+
+struct OrderMove {
+    Position from{};
+    Position::IntType t_index = Position::NONE_VALUE;
+    uint change{};
+    bool vertical{};
+
+    struct Compact {
+        constexpr static inline uint16_t PASS_VALUE = std::numeric_limits<uint16_t>::max();
+        uint16_t data = PASS_VALUE;
+
+        Compact() = default;
+
+        Compact(const OrderMove &m) : data((m.from.p << 10) |
+                                           (m.t_index << 4) |
+                                           (m.change << 1) |
+                                           m.vertical) {}
+
+        [[nodiscard]] OrderMove create() const {
+            return (data == PASS_VALUE) ? OrderMove{}
+                                        : OrderMove{
+                                                  data >> 10,
+                                                  Position::IntType(data & 0b1111110000) >> 4,
+                                                  Position::IntType(data & 0b0000001110) >> 1,
+                                                  bool(data & 1)};
+        }
+    };
+
+    bool operator==(const OrderMove &m) const {
+        return (is_pass() && m.is_pass()) || (from.p == m.from.p && t_index == m.t_index);
+    }
+
+    inline static OrderMove create(Position from, Position to) {
+        OrderMove r = {from};
+        if (from.p == to.p) return r;
+        r.t_index = to.index();
+        if (from.row() == to.row()) {
+            r.vertical = false;
+            r.change = to.column();
+        } else {
+            r.vertical = true;
+            r.change = to.row();
+        }
+        return r;
+    }
+
+    [[nodiscard]] Position to() const { return {t_index}; }
+
+    [[nodiscard]] bool is_pass() const { return t_index == Position::NONE_VALUE; }
+};
+
+class MinimalBoardState {
 public:
-    using String = NumberString<BOARD_COLOURS>;
     using CellArray = std::array<Colour, BOARD_AREA>;
-    using ScoreIntType = uint8_t;
-    using ScoreArray = std::array<ScoreIntType, BOARD_SIZE>;
     using CellIterator = CellArray::pointer;
     using ConstCellIterator = CellArray::const_pointer;
 
-    constexpr static inline auto SCORE_LOOKUP_TABLE = score_lookup_table<BOARD_COLOURS, BOARD_SIZE>();
+    MinimalBoardState() = default;
 
-    static constexpr ScoreIntType lookup_score(String s) {
-        return SCORE_LOOKUP_TABLE[s];
+    MinimalBoardState(const MinimalBoardState &) = default;
+
+    void place_chip(Position p, Colour c) { cells[p.index()] = c; }
+
+    void remove_chip(Position p) { cells[p.index()] = 0; }
+
+    void move_chip(Position from, Position to) {
+        cells[to.index()] = cells[from.index()];
+        cells[from.index()] = 0;
     }
 
-    BoardState() = default;
+    [[nodiscard]] uint8_t get_horizontal_score(uint row) const { return lookup_score(get_sorted_string<BOARD_COLOURS, BOARD_SIZE, 1>(&cells[row * BOARD_SIZE])); }
 
-    BoardState(const BoardState &) = default;
+    [[nodiscard]] uint8_t get_vertical_score(uint column) const { return lookup_score(get_sorted_string<BOARD_COLOURS, BOARD_SIZE, BOARD_SIZE>(&cells[column])); }
 
-    [[nodiscard]] ConstCellIterator cells_begin() const { return cells.cbegin(); }
-
-    [[nodiscard]] ConstCellIterator cells_end() const { return cells.cend(); }
-
-    [[nodiscard]] uint get_open_cells() const { return open_cells; }
-
-    [[nodiscard]] uint get_total_score() const { return total_score; }
-
-    [[nodiscard]] const ScoreArray &get_vertical_score() const { return vertical_score; }
-
-    [[nodiscard]] const ScoreArray &get_horizontal_score() const { return horizontal_score; }
-
-    struct ChaosMove {
-        Position pos{};
-        Colour colour{};
-
-        bool operator==(const ChaosMove &m) const {
-            return pos.p == m.pos.p && colour == m.colour;
-        }
-    };
-
-    struct OrderMove {
-        Position from{};
-        Position::IntType t_index = Position::NONE_VALUE;
-        uint change{};
-        bool vertical{};
-
-        struct Compact {
-            constexpr static inline uint16_t PASS_VALUE = std::numeric_limits<uint16_t>::max();
-            uint16_t data = PASS_VALUE;
-
-            Compact() = default;
-
-            Compact(const OrderMove &m) : data((m.from.p << 10) |
-                                               (m.t_index << 4) |
-                                               (m.change << 1) |
-                                               m.vertical) {}
-
-            [[nodiscard]] OrderMove create() const {
-                return (data == PASS_VALUE) ? OrderMove{}
-                                            : OrderMove{
-                                                      data >> 10,
-                                                      Position::IntType(data & 0b1111110000) >> 4,
-                                                      Position::IntType(data & 0b0000001110) >> 1,
-                                                      bool(data & 1)};
-            }
-        };
-
-        OrderMove() = default;
-
-        bool operator==(const OrderMove &m) const {
-            return (is_pass() && m.is_pass()) || (from.p == m.from.p && t_index == m.t_index);
-        }
-
-        inline static OrderMove create(Position from, Position to) {
-            OrderMove r = {from};
-            if (from.p == to.p) return r;
-            r.t_index = to.index();
-            if (from.row() == to.row()) {
-                r.vertical = false;
-                r.change = to.column();
-            } else {
-                r.vertical = true;
-                r.change = to.row();
-            }
-            return r;
-        }
-
-        [[nodiscard]] Position to() const { return {t_index}; }
-
-        [[nodiscard]] bool is_pass() const { return t_index == Position::NONE_VALUE; }
-    };
-
-    void place_chip(const ChaosMove &move) {
-        cells[move.pos.index()] = move.colour;
-        update_score_row(move.pos.row());
-        update_score_column(move.pos.column());
-        --open_cells;
-    }
-
-    void move_chip(const OrderMove &move) {
-        if (move.is_pass()) return;
-        if (move.vertical) move_chip<true>(move.from, move.t_index, move.change);
-        else move_chip<false>(move.from, move.t_index, move.change);
-    }
-
-    template <bool VERTICAL>
-    void move_chip(Position from, uint t_index, uint x) {
-        const auto f_index = from.index();
-        const auto f_row = from.row();
-        const auto f_column = from.column();
-
-        cells[t_index] = cells[f_index];
-        cells[f_index] = 0;
-
-        if (!VERTICAL || horizontal_score[f_row]) update_score_row(f_row);
-        if (VERTICAL || vertical_score[f_column]) update_score_column(f_column);
-
-        if constexpr (VERTICAL) update_score_row(x);
-        else update_score_column(x);
+    [[nodiscard]] uint get_total_score() const {
+        uint r = 0;
+        for (uint i = 0; i < BOARD_SIZE; ++i) r += get_horizontal_score(i) + get_vertical_score(i);
+        return r;
     }
 
     template <typename Function>
@@ -204,29 +178,11 @@ public:
             if (!*it) std::forward<Function>(f)(Position{p});
     }
 
+    [[nodiscard]] ConstCellIterator cells_begin() const { return cells.cbegin(); }
+
+    [[nodiscard]] ConstCellIterator cells_end() const { return cells.cend(); }
+
 private:
-    CellIterator get_cell_iterator(Position p) { return &cells[p.index()]; }
-
-    CellIterator get_row_iterator(uint row) { return &cells[row * BOARD_SIZE]; }
-
-    CellIterator get_column_iterator(uint column) { return &cells[column]; }
-
-    void update_score_row(uint row) {
-        update_score(horizontal_score[row],
-                     get_sorted_string<BOARD_COLOURS, BOARD_SIZE, 1>(get_row_iterator(row)));
-    }
-
-    void update_score_column(uint column) {
-        update_score(vertical_score[column],
-                     get_sorted_string<BOARD_COLOURS, BOARD_SIZE, BOARD_SIZE>(get_column_iterator(column)));
-    }
-
-    void update_score(ScoreIntType &old_score, String s) {
-        auto new_score = lookup_score(s);
-        total_score += new_score - old_score;
-        old_score = new_score;
-    }
-
     template <bool LEFT_TO_RIGHT, typename Function>
     void for_each_possible_order_move_helper(Function &&f) const {
         constexpr int step = LEFT_TO_RIGHT ? 1 : -1;
@@ -241,8 +197,8 @@ private:
                 if (*it) {
                     vertical_from[column].p = horizontal_from.p = pos_index;
                 } else {
-                    if (!horizontal_from.is_none()) std::forward<Function>(f)(BoardState::OrderMove{horizontal_from, pos_index, column, false});
-                    if (!vertical_from[column].is_none()) std::forward<Function>(f)(BoardState::OrderMove{vertical_from[column], pos_index, row, true});
+                    if (!horizontal_from.is_none()) std::forward<Function>(f)(horizontal_from, pos_index, column, false);
+                    if (!vertical_from[column].is_none()) std::forward<Function>(f)(vertical_from[column], pos_index, row, true);
                 }
 
                 it += step;
@@ -252,6 +208,66 @@ private:
     }
 
     CellArray cells{};
+};
+
+class BoardState {
+public:
+    using ScoreArray = std::array<uint8_t, BOARD_SIZE>;
+
+    BoardState() = default;
+
+    BoardState(const BoardState &) = default;
+
+    [[nodiscard]] const MinimalBoardState &get_minimal_state() const { return minimal_state; }
+
+    [[nodiscard]] uint get_open_cells() const { return open_cells; }
+
+    [[nodiscard]] uint get_total_score() const { return total_score; }
+
+    [[nodiscard]] const ScoreArray &get_vertical_score() const { return vertical_score; }
+
+    [[nodiscard]] const ScoreArray &get_horizontal_score() const { return horizontal_score; }
+
+    void place_chip(const ChaosMove &move) {
+        minimal_state.place_chip(move.pos, move.colour);
+
+        update_horizontal_score(move.pos.row());
+        update_vertical_score(move.pos.column());
+        --open_cells;
+    }
+
+    void move_chip(const OrderMove &move) {
+        if (move.is_pass()) return;
+        if (move.vertical) move_chip<true>(move.from, move.t_index, move.change);
+        else move_chip<false>(move.from, move.t_index, move.change);
+    }
+
+    template <bool VERTICAL>
+    void move_chip(Position from, Position to, uint x) {
+        const auto f_index = from.index();
+        const auto f_row = from.row();
+        const auto f_column = from.column();
+
+        minimal_state.move_chip(from, to);
+
+        if (!VERTICAL || horizontal_score[f_row]) update_horizontal_score(f_row);
+        if (VERTICAL || vertical_score[f_column]) update_vertical_score(f_column);
+
+        if constexpr (VERTICAL) update_horizontal_score(x);
+        else update_vertical_score(x);
+    }
+
+private:
+    void update_horizontal_score(uint row) { update_score(horizontal_score[row], minimal_state.get_horizontal_score(row)); }
+
+    void update_vertical_score(uint column) { update_score(vertical_score[column], minimal_state.get_vertical_score(column)); }
+
+    void update_score(ScoreArray::value_type &old_score, ScoreArray::value_type new_score) {
+        total_score += new_score - old_score;
+        old_score = new_score;
+    }
+
+    MinimalBoardState minimal_state;
 
     ScoreArray vertical_score{};
     ScoreArray horizontal_score{};

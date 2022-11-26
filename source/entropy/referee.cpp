@@ -19,7 +19,7 @@ void start_as_chaos(Args &&...args) {
             auto from = position_from_string(str);
             auto to = position_from_string(str + 2);
 
-            chaos.register_order_move(BoardState::OrderMove::create(from, to));
+            chaos.register_order_move(OrderMove::create(from, to));
         }
         std::cin >> c;
         std::cerr << c << '\n';
@@ -32,7 +32,7 @@ void start_as_chaos(Args &&...args) {
 }
 
 template <typename ORDER, typename... Args>
-void start_as_order(BoardState::ChaosMove last_move, Args &&...args) {
+void start_as_order(ChaosMove last_move, Args &&...args) {
     ORDER order(std::forward<Args>(args)...);
     order.register_chaos_move(last_move);
     char str[5]{};
@@ -43,7 +43,7 @@ void start_as_order(BoardState::ChaosMove last_move, Args &&...args) {
             Colour colour = str[0] - '0';
             auto pos = position_from_string(str + 1);
 
-            last_move = BoardState::ChaosMove{pos, colour};
+            last_move = ChaosMove{pos, colour};
             order.register_chaos_move(last_move);
         }
         auto m = order.suggest_order_move();

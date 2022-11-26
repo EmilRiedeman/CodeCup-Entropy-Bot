@@ -29,7 +29,7 @@ inline std::istream &operator>>(std::istream &in, Position &p) {
     return in;
 }
 
-inline void show_board(const BoardState &b, std::ostream &out = std::cerr) {
+inline void show_board(const MinimalBoardState &b, std::ostream &out = std::cerr) {
     out << ' ';
     for (char c = 'a'; c < char('a' + BOARD_SIZE); ++c) out << ' ' << c;
     out << '\n';
@@ -40,15 +40,15 @@ inline void show_board(const BoardState &b, std::ostream &out = std::cerr) {
             out << ' ' << char((*it) ? (*it) + '0' : '_');
             ++it;
         }
-        out << " = " << b.get_horizontal_score()[row];
+        out << " = " << b.get_horizontal_score(row);
         out << '\n';
     }
     out << ' ';
     for (uint column = 0; column < BOARD_SIZE; ++column) out << " =";
     out << "\n ";
-    for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << b.get_vertical_score()[column] / 10;
+    for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << b.get_vertical_score(column) / 10;
     out << "\n ";
-    for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << b.get_vertical_score()[column] % 10;
+    for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << b.get_vertical_score(column) % 10;
     out << "   " << b.get_total_score() << '\n';
 }
 

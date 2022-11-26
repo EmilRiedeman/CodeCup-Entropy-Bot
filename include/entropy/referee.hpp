@@ -22,7 +22,7 @@ inline uint simulate_game(CHAOS &&chaos, ORDER &&order) {
         chaos.register_chaos_move(chaos_move);
         order.register_chaos_move(chaos_move);
 
-        if constexpr (PRINT) show_board(b);
+        if constexpr (PRINT) show_board(b.get_minimal_state());
 
         auto order_move = std::forward<ORDER>(order).suggest_order_move();
 
@@ -30,7 +30,7 @@ inline uint simulate_game(CHAOS &&chaos, ORDER &&order) {
         chaos.register_order_move(order_move);
         order.register_order_move(order_move);
 
-        if constexpr (PRINT) show_board(b);
+        if constexpr (PRINT) show_board(b.get_minimal_state());
     }
     std::cerr << b.get_total_score() << '\n';
 
