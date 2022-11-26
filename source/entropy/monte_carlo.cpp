@@ -34,7 +34,7 @@ void OrderNode::init() {
         moves[unvisited++] = OrderMove::Compact({a, b, c, d});
     });
 
-    children.reserve(std::max(unvisited / 3, 1u));
+    children.reserve(std::max(unvisited / 3, 2u));
 }
 
 ChaosNode *OrderNode::add_random_child() {
@@ -85,8 +85,14 @@ void ChaosNode::init() {
     board.get_minimal_state().for_each_empty_space([this, &m](Position p) {
         moves[m++] = p.p;
     });
-    unvisited.fill(m);
     std::shuffle(moves.begin(), moves.begin() + m, RNG);
+
+    for (uint i = 0; i < ChipPool::N; ++i) {
+        if (pool.chips_left(i + 1)) {
+            unvisited[i] = m;
+            children[i].reserve(std::max(m / 3, 2u));
+        }
+    }
 }
 
 OrderNode *ChaosNode::add_random_child(Colour colour) {

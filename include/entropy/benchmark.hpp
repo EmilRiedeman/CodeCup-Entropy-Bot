@@ -120,7 +120,22 @@ inline void benchmark_rng() {
  * slow
  *
  * ChaosNode
+ * reserve / 3
+ * 28645ms
+ * 27502ms
+ * 27567ms
+ * 27601ms
+ * 27710ms
+ * 27599ms
  *
+ * reserve / 2
+ * 28502ms
+ * 28584ms
+ * slow
+ *
+ * reserve / 4
+ * 27894ms
+ * slow
  *
  */
 template <std::size_t ROLLOUTS = 100'000, std::size_t N = 200>
