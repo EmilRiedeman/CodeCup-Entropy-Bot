@@ -29,7 +29,7 @@ inline std::istream &operator>>(std::istream &in, Position &p) {
     return in;
 }
 
-inline void show_board(const Board &b, std::ostream &out = std::cerr) {
+inline void show_board(const BoardState &b, std::ostream &out = std::cerr) {
     out << ' ';
     for (char c = 'a'; c < char('a' + BOARD_SIZE); ++c) out << ' ' << c;
     out << '\n';

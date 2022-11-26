@@ -68,9 +68,9 @@ struct ChipPool {
     }
 };
 
-class Board {
+class BoardState {
 public:
-    using BoardString = NumberString<BOARD_COLOURS>;
+    using String = NumberString<BOARD_COLOURS>;
     using CellArray = std::array<Colour, BOARD_AREA>;
     using ScoreIntType = uint8_t;
     using ScoreArray = std::array<ScoreIntType, BOARD_SIZE>;
@@ -79,13 +79,13 @@ public:
 
     constexpr static inline auto SCORE_LOOKUP_TABLE = score_lookup_table<BOARD_COLOURS, BOARD_SIZE>();
 
-    static constexpr ScoreIntType lookup_score(BoardString s) {
+    static constexpr ScoreIntType lookup_score(String s) {
         return SCORE_LOOKUP_TABLE[s];
     }
 
-    Board() = default;
+    BoardState() = default;
 
-    Board(const Board &) = default;
+    BoardState(const BoardState &) = default;
 
     [[nodiscard]] ConstCellIterator cells_begin() const { return cells.cbegin(); }
 
@@ -221,7 +221,7 @@ private:
                      get_sorted_string<BOARD_COLOURS, BOARD_SIZE, BOARD_SIZE>(get_column_iterator(column)));
     }
 
-    void update_score(ScoreIntType &old_score, BoardString s) {
+    void update_score(ScoreIntType &old_score, String s) {
         auto new_score = lookup_score(s);
         total_score += new_score - old_score;
         old_score = new_score;
@@ -241,8 +241,8 @@ private:
                 if (*it) {
                     vertical_from[column].p = horizontal_from.p = pos_index;
                 } else {
-                    if (!horizontal_from.is_none()) std::forward<Function>(f)(Board::OrderMove{horizontal_from, pos_index, column, false});
-                    if (!vertical_from[column].is_none()) std::forward<Function>(f)(Board::OrderMove{vertical_from[column], pos_index, row, true});
+                    if (!horizontal_from.is_none()) std::forward<Function>(f)(BoardState::OrderMove{horizontal_from, pos_index, column, false});
+                    if (!vertical_from[column].is_none()) std::forward<Function>(f)(BoardState::OrderMove{vertical_from[column], pos_index, row, true});
                 }
 
                 it += step;

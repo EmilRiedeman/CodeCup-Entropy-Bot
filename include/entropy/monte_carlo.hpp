@@ -14,7 +14,7 @@ class MoveMaker;
 class OrderNode;
 class ChaosNode;
 
-inline uint rollout_board(const Board &b) {
+inline uint rollout_board(const BoardState &b) {
     return b.get_total_score();
 }
 
@@ -46,16 +46,16 @@ public:
     OrderNode() = delete;
 
     OrderNode(
-            const Board &b,
+            const BoardState &b,
             const ChipPool &pool) : board(b), pool(pool) { init(); }
 
     OrderNode(
             ChaosNode *p,
-            const Board::ChaosMove &new_move);
+            const BoardState::ChaosMove &new_move);
 
     void set_as_root() { parent = nullptr; }
 
-    std::unique_ptr<ChaosNode> *get_child(const Board::OrderMove &move) {
+    std::unique_ptr<ChaosNode> *get_child(const BoardState::OrderMove &move) {
         auto it = std::find_if(children.begin(), children.end(),
                                [=](const auto &x) { return move == x->last_move; });
         if (it == children.end()) return nullptr;
@@ -66,7 +66,7 @@ public:
 
     ChaosNode *select_child(float uct_temperature) const;
 
-    Board::OrderMove select_move() const;
+    BoardState::OrderMove select_move() const;
 
     void rollout() { record_score(rollout_board(board)); }
 
@@ -79,17 +79,17 @@ private:
 
     void record_score(uint score);
 
-    Board board;
+    BoardState board;
     const ChipPool pool;
     ChaosNode *parent{};
     std::vector<std::unique_ptr<ChaosNode>> children{};
 
-    const Board::ChaosMove last_move{};
+    const BoardState::ChaosMove last_move{};
 
     uint total_visits{};
     uint total_score{};
 
-    std::array<Board::OrderMove::Compact, 110> moves{};// not safe size maybe ???
+    std::array<BoardState::OrderMove::Compact, 110> moves{};// not safe size maybe ???
     uint unvisited{};
 
     friend ChaosNode;
@@ -101,16 +101,16 @@ public:
     ChaosNode() = delete;
 
     ChaosNode(
-            const Board &b,
+            const BoardState &b,
             const ChipPool &pool) : board(b), pool(pool) { init(); }
 
     ChaosNode(
             OrderNode *p,
-            const Board::OrderMove &new_move);
+            const BoardState::OrderMove &new_move);
 
     void set_as_root() { parent = nullptr; }
 
-    std::unique_ptr<OrderNode> *get_child(const Board::ChaosMove &move) {
+    std::unique_ptr<OrderNode> *get_child(const BoardState::ChaosMove &move) {
         auto &vec = children[move.colour - 1];
         auto it = std::find_if(vec.begin(), vec.end(),
                                [=](const auto &x) { return move.pos.p == x->last_move.pos.p; });
@@ -122,7 +122,7 @@ public:
 
     OrderNode *select_child(Colour colour, float uct_temperature) const;
 
-    Board::ChaosMove select_move(Colour colour) const;
+    BoardState::ChaosMove select_move(Colour colour) const;
 
     void rollout() { record_score(rollout_board(board)); }
 
@@ -154,12 +154,12 @@ private:
 
     void record_score(uint score);
 
-    Board board;
+    BoardState board;
     const ChipPool pool;
     OrderNode *parent{};
     std::array<std::vector<std::unique_ptr<OrderNode>>, ChipPool::N> children{};
 
-    const Board::OrderMove last_move{};
+    const BoardState::OrderMove last_move{};
 
     std::array<uint, ChipPool::N> visits{};
     uint total_visits{};
@@ -179,7 +179,7 @@ public:
         std::cerr << "MCTS Seed: " << RNG.seed << '\n';
     }
 
-    Board::ChaosMove suggest_chaos_move(Colour colour) override {
+    BoardState::ChaosMove suggest_chaos_move(Colour colour) override {
         if (!chaos_node) chaos_node = std::make_unique<ChaosNode>(board, chip_pool);
         else chaos_node->clear_colours(uint(colour));
         //std::cerr << chaos_node->total_visits << "\n";
@@ -188,7 +188,7 @@ public:
         return chaos_node->select_move(colour);
     }
 
-    Board::OrderMove suggest_order_move() override {
+    BoardState::OrderMove suggest_order_move() override {
         if (!order_node) order_node = std::make_unique<OrderNode>(board, chip_pool);
         //std::cerr << order_node->total_visits << "\n";
 
@@ -196,7 +196,7 @@ public:
         return order_node->select_move();
     }
 
-    void register_chaos_move(const Board::ChaosMove &move) override {
+    void register_chaos_move(const BoardState::ChaosMove &move) override {
         board.place_chip(move);
         //show_board(board);
         chip_pool = ChipPool(chip_pool, move.colour);
@@ -211,7 +211,7 @@ public:
         }
     }
 
-    void register_order_move(const Board::OrderMove &move) override {
+    void register_order_move(const BoardState::OrderMove &move) override {
         board.move_chip(move);
         //show_board(board);
 
@@ -226,7 +226,7 @@ public:
     }
 
 private:
-    Board board;
+    BoardState board;
     ChipPool chip_pool;
     std::unique_ptr<OrderNode> order_node{};
     std::unique_ptr<ChaosNode> chaos_node{};

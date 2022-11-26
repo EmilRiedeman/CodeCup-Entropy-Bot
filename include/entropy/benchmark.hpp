@@ -44,11 +44,11 @@ inline void benchmark_return_value(const char *name, Function &&f) {
 
 template <std::size_t N = 1'000'000'000>
 inline void benchmark_board_copy() {
-    Board board;
+    BoardState board;
     board.place_chip({{2, 2}, 1});
     board.place_chip({{2, 3}, 5});
     benchmark<N>("board copy", [&board]() {
-        [[maybe_unused]] volatile Board copy = board;
+        [[maybe_unused]] volatile BoardState copy = board;
     });
 }
 
@@ -66,7 +66,7 @@ inline void benchmark_rng() {
 template <std::size_t ROLLOUTS = 10'000'000>
 inline void benchmark_mcts_ponder() {
     using namespace mcts;
-    Board b;
+    BoardState b;
     ChaosNode node(b, ChipPool{});
     {
         Timer t("Monte Carlo tree search ponder");
