@@ -120,6 +120,10 @@ public:
 
     [[nodiscard]] bool can_add_child(Colour colour) const { return unvisited[colour - 1]; }
 
+    void try_init() {
+        if (!initialized) init();
+    }
+
     [[nodiscard]] float avg_score() const { return float(total_score) / 80 / float(total_visits); }
 
     [[nodiscard]] bool is_terminal() const { return !board.get_open_cells(); }
@@ -160,6 +164,8 @@ private:
 
     std::array<uint8_t, BOARD_AREA> moves{};
     std::array<uint8_t, ChipPool::N> unvisited{};
+
+    bool initialized = false;
 
     friend OrderNode;
     friend MoveMaker;

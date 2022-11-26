@@ -119,6 +119,9 @@ inline void benchmark_rng() {
  * array instead of vector for children
  * slow
  *
+ * ChaosNode
+ *
+ *
  */
 template <std::size_t ROLLOUTS = 100'000, std::size_t N = 200>
 inline void benchmark_mcts_ponder() {

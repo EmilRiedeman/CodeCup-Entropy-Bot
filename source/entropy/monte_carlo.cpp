@@ -79,6 +79,8 @@ ChaosNode::ChaosNode(
 }
 
 void ChaosNode::init() {
+    initialized = true;
+
     uint m = 0;
     board.get_minimal_state().for_each_empty_space([this, &m](Position p) {
         moves[m++] = p.p;
@@ -125,9 +127,13 @@ inline void tree_search_helper(OrderNode *o_node, const float uct_temperature) {
         auto c_node = o_node->select_child(uct_temperature);
         auto random_colour = c_node->random_colour();
 
-        if (c_node->is_terminal() || c_node->can_add_child(random_colour)) {
-            if (!c_node->is_terminal()) c_node->add_random_child(random_colour)->rollout();
-            else c_node->rollout();
+        if (c_node->is_terminal()) {
+            c_node->rollout();
+            break;
+        }
+        c_node->try_init();
+        if (c_node->can_add_child(random_colour)) {
+            c_node->add_random_child(random_colour)->rollout();
             break;
         }
         o_node = c_node->select_child(random_colour, uct_temperature);
@@ -147,6 +153,7 @@ void tree_search_order(OrderNode &root, uint rollouts, const float uct_temperatu
 
 void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts, const float uct_temperature) {
     if (root.is_terminal()) return;
+    root.try_init();
     root.set_as_root();
 
     while (root.can_add_child(c)) root.add_random_child(c)->rollout();
