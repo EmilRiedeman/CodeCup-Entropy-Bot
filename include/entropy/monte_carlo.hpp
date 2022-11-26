@@ -118,7 +118,7 @@ public:
 
     void rollout() { record_score(rollout_board(board)); }
 
-    [[nodiscard]] bool can_add_child(Colour colour) const { return unvisited[colour - 1]; }
+    [[nodiscard]] bool can_add_child(Colour colour) const { return !unvisited_moves[colour - 1].empty(); }
 
     void try_init() {
         if (!initialized) init();
@@ -133,7 +133,8 @@ public:
     void clear_colours(uint keep) {
         for (uint c = 0; c < children.size(); ++c) {
             if (c == keep - 1) continue;
-            unvisited[c] += children[c].size();
+            unvisited_moves[c].clear();
+            unvisited_moves[c].shrink_to_fit();
 
             children[c].clear();
 
@@ -162,8 +163,7 @@ private:
     std::array<uint, ChipPool::N> scores{};
     uint total_score{};
 
-    std::array<uint8_t, BOARD_AREA> moves{};
-    std::array<uint8_t, ChipPool::N> unvisited{};
+    std::array<std::vector<uint8_t>, ChipPool::N> unvisited_moves{};
 
     bool initialized = false;
 

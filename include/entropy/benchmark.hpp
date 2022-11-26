@@ -97,7 +97,7 @@ inline void benchmark_rng() {
  * 47831ms
  * 47838ms
  *
- * vector instead of array for moves
+ * vector instead of array for unvisited_moves
  * 51009ms
  */
 
@@ -113,7 +113,7 @@ inline void benchmark_rng() {
  * 31235ms
  * 31195ms
  *
- * vector instead of array for moves
+ * vector instead of array for unvisited_moves
  * slow
  *
  * array instead of vector for children
@@ -137,6 +137,12 @@ inline void benchmark_rng() {
  * 27894ms
  * slow
  *
+ * vector for moves
+ * 30655ms
+ * 30340ms
+ * 29094ms
+ * 29361ms
+ *
  */
 template <std::size_t ROLLOUTS = 100'000, std::size_t N = 200>
 inline void benchmark_mcts_ponder() {
@@ -147,6 +153,7 @@ inline void benchmark_mcts_ponder() {
     RandomMoveMaker rando{1};
     for (uint i = 0; i < 15; ++i) {
         Colour c = pool.random_chip(rand);
+        pool = ChipPool(pool, c);
         auto m = rando.suggest_chaos_move(c);
         b.place_chip(m);
         rando.register_chaos_move(m);

@@ -81,25 +81,42 @@ ChaosNode::ChaosNode(
 void ChaosNode::init() {
     initialized = true;
 
-    uint m = 0;
-    board.get_minimal_state().for_each_empty_space([this, &m](Position p) {
-        moves[m++] = p.p;
-    });
-    std::shuffle(moves.begin(), moves.begin() + m, RNG);
+    const uint N = board.get_open_cells();
 
+    std::vector<uint8_t> possible_moves;
+    possible_moves.reserve(N);
+
+    board.get_minimal_state().for_each_empty_space([&possible_moves](Position p) {
+        possible_moves.push_back(p.p);
+    });
+
+    std::vector<uint8_t> *vec{};
     for (uint i = 0; i < ChipPool::N; ++i) {
         if (pool.chips_left(i + 1)) {
-            unvisited[i] = m;
-            children[i].reserve(std::max(m / 3, 2u));
+            if (vec) unvisited_moves[i] = *vec;
+            else {
+                unvisited_moves[i] = std::move(possible_moves);
+                vec = &unvisited_moves[i];
+            }
+            children[i].reserve(std::max(N / 3, 2u));
         }
     }
 }
 
 OrderNode *ChaosNode::add_random_child(Colour colour) {
-    children[colour - 1].push_back(std::make_unique<OrderNode>(
+    uint index = colour - 1;
+
+    auto it = random_element(unvisited_moves[index].begin(), unvisited_moves[index].size(), RNG);
+    Position p = *it;
+
+    *it = unvisited_moves[index].back();
+    unvisited_moves[index].pop_back();
+    if (unvisited_moves[index].empty()) unvisited_moves[index].shrink_to_fit();
+
+    children[index].push_back(std::make_unique<OrderNode>(
             this,
-            ChaosMove{moves[--unvisited[colour - 1]], colour}));
-    return children[colour - 1].back().get();
+            ChaosMove{p, colour}));
+    return children[index].back().get();
 }
 
 OrderNode *ChaosNode::select_child(Colour colour, const float uct_temperature) const {
