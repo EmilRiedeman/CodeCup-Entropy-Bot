@@ -69,6 +69,11 @@ struct ChipPool {
         for (--c; c < prefix_sum.size(); ++c) --prefix_sum[c];
     }
 
+    uint chips_left(Colour c) const {
+        if (--c) return prefix_sum[c] - prefix_sum[c - 1];
+        return prefix_sum[0];
+    }
+
     template <typename RandomGenerator>
     constexpr Colour random_chip(RandomGenerator &&gen) const {
         return Colour(std::upper_bound(prefix_sum.begin(), prefix_sum.end(), distribution(gen)) - prefix_sum.begin() + 1);
