@@ -18,7 +18,7 @@ void OrderNode::init() {
         moves[unvisited++] = OrderMove::Compact({a, b, c, d});
     });
 
-    children.reserve(std::max(unvisited / 2, 1u));
+    children.reserve(std::max(unvisited / 3, 1u));
 }
 
 ChaosNode *OrderNode::add_random_child() {

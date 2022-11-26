@@ -73,6 +73,7 @@ inline void benchmark_rng() {
 }
 
 /*
+ * R=20'000'000 N=10
  * OrderNode children vector reserve optimization
  * reserve n / 2, 1
  * 48224ms
@@ -99,13 +100,29 @@ inline void benchmark_rng() {
  * vector instead of array for moves
  * 51009ms
  */
-template <std::size_t ROLLOUTS = 2'000'000, std::size_t N = 10>
+
+/* R=100'000 N=200
+ * OrderNode
+ * normal
+ * 31418ms
+ * 31574ms
+ * 31471ms
+ *
+ * / 3
+ * 30914ms
+ * 31235ms
+ * 31195ms
+ *
+ * vector instead of array for moves
+ *
+ */
+template <std::size_t ROLLOUTS = 100'000, std::size_t N = 200>
 inline void benchmark_mcts_ponder() {
     using namespace mcts;
     FastRand rand{0};
     BoardState b;
     ChipPool pool;
-    RandomMoveMaker rando{0};
+    RandomMoveMaker rando{1};
     for (uint i = 0; i < 15; ++i) {
         Colour c = pool.random_chip(rand);
         auto m = rando.suggest_chaos_move(c);
