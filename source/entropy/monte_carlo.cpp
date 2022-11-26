@@ -12,14 +12,17 @@ OrderNode::OrderNode(
 }
 
 void OrderNode::init() {
+    initialized = true;
     unvisited = 1;
     board.get_minimal_state().for_each_possible_order_move([this](auto a, auto b, auto c, auto d) {
         moves[unvisited++] = OrderMove::Compact({a, b, c, d});
     });
+    children.reserve(std::max(unvisited / 2, 1u));
 }
 
 ChaosNode *OrderNode::add_random_child() {
-    auto it = moves.begin() + std::uniform_int_distribution<uint>{0, --unvisited}(RNG);
+    --unvisited;
+    auto it = moves.begin() + std::uniform_int_distribution<uint>{0, unvisited}(RNG);
     auto end = moves.begin() + unvisited;
     std::iter_swap(it, end);
 
@@ -98,6 +101,7 @@ void ChaosNode::record_score(uint score) {
 
 inline void tree_search_helper(OrderNode *o_node, const float uct_temperature) {
     while (true) {
+        o_node->try_init();
         if (o_node->can_add_child()) {
             o_node->add_random_child()->rollout();
             break;
@@ -115,6 +119,7 @@ inline void tree_search_helper(OrderNode *o_node, const float uct_temperature) {
 }
 
 void tree_search_order(OrderNode &root, uint rollouts, const float uct_temperature) {
+    root.try_init();
     root.set_as_root();
 
     while (root.can_add_child()) root.add_random_child()->rollout();

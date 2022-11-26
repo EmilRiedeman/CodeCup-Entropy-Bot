@@ -12,7 +12,6 @@ int main(int argc, const char *args[]) {
     } else if (argc >= 2) {
         if (!std::strcmp(args[1], "benchmark")) {
             benchmark_mcts_ponder();
-            benchmark_simulated_game();
         }
         if (!std::strcmp(args[1], "competition")) {
             uint total_score = 0;

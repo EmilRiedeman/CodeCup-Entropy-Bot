@@ -16,14 +16,23 @@ using time_point = std::chrono::high_resolution_clock::time_point;
 struct Timer {
     const char *const name;
     time_point t_begin = std::chrono::high_resolution_clock::now();
+    time_point t_end{};
 
     Timer() = delete;
 
     explicit Timer(const char *name) : name(name) {}
 
+    void stop() {
+        t_end = std::chrono::high_resolution_clock::now();
+    }
+
+    [[nodiscard]] double millis() const {
+        return (double) std::chrono::duration_cast<std::chrono::microseconds>((t_end - t_begin)).count() / 1000.;
+    }
+
     ~Timer() {
-        auto t_end = std::chrono::high_resolution_clock::now();
-        std::cerr << "Timer " << name << ": " << (double) std::chrono::duration_cast<std::chrono::microseconds>((t_end - t_begin)).count() / 1000. << "ms\n";
+        if (t_end < t_begin) stop();
+        std::cerr << "Timer " << name << ": " << millis() << "ms\n";
     }
 };
 
@@ -63,16 +72,43 @@ inline void benchmark_rng() {
     benchmark_return_value<N>("std::mt19937 generator", gen2);
 }
 
-template <std::size_t ROLLOUTS = 10'000'000>
+/*
+ * OrderNode children vector reserve optimization
+ * reserve n / 2, 1
+ * 48224ms
+ * 48453ms
+ * 46926.3ms
+ *
+ * no reserve
+ * 51000ms
+ * 52643ms
+ * 50580ms
+ *
+ * later init n / 2, 1
+ * 47587ms
+ * 46337ms
+ * 46614ms
+ * 46429.7ms
+ *
+ * later init n
+ * 48309ms
+ * 47531ms
+ * 47831ms
+ * 47838ms
+ */
+template <std::size_t ROLLOUTS = 2'000'000>
 inline void benchmark_mcts_ponder() {
     using namespace mcts;
     BoardState b;
-    ChaosNode node(b, ChipPool{});
     {
+        mcts::RNG.seed = 0;
+
         Timer t("Monte Carlo tree search ponder");
-        tree_search_chaos(node, 1, ROLLOUTS);
+        for (uint i = 0; i < 10; ++i) {
+            ChaosNode node(b, ChipPool{});
+            tree_search_chaos(node, 1, ROLLOUTS);
+        }
     }
-    std::cerr << node.select_move(1).pos << '\n';
 }
 
 inline void benchmark_simulated_game() {

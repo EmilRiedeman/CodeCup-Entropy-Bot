@@ -72,12 +72,18 @@ public:
 
     [[nodiscard]] bool can_add_child() const { return unvisited; }
 
+    void try_init() {
+        if (!initialized) init();
+    }
+
     [[nodiscard]] float avg_score() const { return -float(total_score) / 80 / float(total_visits); }
 
 private:
     void init();
 
     void record_score(uint score);
+
+    constexpr static std::size_t MAX_POSSIBLE_MOVES = 110;// not safe size maybe ???
 
     BoardState board;
     const ChipPool pool;
@@ -89,8 +95,10 @@ private:
     uint total_visits{};
     uint total_score{};
 
-    std::array<OrderMove::Compact, 110> moves{};// not safe size maybe ???
+    std::array<OrderMove::Compact, MAX_POSSIBLE_MOVES> moves{};
     uint unvisited{};
+
+    bool initialized = false;
 
     friend ChaosNode;
     friend MoveMaker;
