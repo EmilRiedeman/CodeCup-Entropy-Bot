@@ -15,9 +15,11 @@ int main(int argc, const char *args[]) {
             benchmark_simulated_game();
         }
         if (!std::strcmp(args[1], "competition")) {
-            simulate_game<true>(mcts::MoveMaker(), mcts::MoveMaker());
-            simulate_game<>(RandomMoveMaker(), mcts::MoveMaker());
-            simulate_game<>(mcts::MoveMaker(), RandomMoveMaker());
+            uint total_score = 0;
+            uint N = 100;
+            for (uint i = 0; i < N; ++i)
+                total_score += simulate_game<>(RandomMoveMaker(), mcts::MoveMaker());
+            std::cerr << total_score / N << '\n';
         }
     }
     return 0;

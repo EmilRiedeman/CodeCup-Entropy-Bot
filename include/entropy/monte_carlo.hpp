@@ -22,8 +22,8 @@ inline float uct_score(float s, float logN, float n, float temperature) {
     return s + temperature * std::sqrt(logN / n);
 }
 
-void tree_search_order(OrderNode &root, uint rollouts, float uct_temperature = 3);
-void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts, float uct_temperature = 3);
+void tree_search_order(OrderNode &root, uint rollouts, float uct_temperature = 5);
+void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts, float uct_temperature = 5);
 
 template <typename T, typename F>
 inline T *select_child_helper(const std::vector<std::unique_ptr<T>> &vec, F &&evaluator) {
@@ -232,7 +232,7 @@ private:
     std::unique_ptr<ChaosNode> chaos_node{};
 
     uint rollouts = 100'000;
-    float uct_temperature = 3;
+    float uct_temperature = 7;
 };
 
 
