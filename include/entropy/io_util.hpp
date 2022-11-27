@@ -49,7 +49,15 @@ inline void show_board(const MinimalBoardState &b, std::ostream &out = std::cerr
     for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << b.get_vertical_score(column) / 10;
     out << "\n ";
     for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << b.get_vertical_score(column) % 10;
-    out << "   " << b.get_total_score() << '\n';
+    out << "   " << b.get_total_score() << "\n\n";
+}
+
+inline void show_chip_pool(const ChipPool &chip_pool, std::ostream &out = std::cerr) {
+    for (uint c = 1; c <= ChipPool::N; ++c) {
+        uint amount = chip_pool.chips_left(c);
+        if (amount) out << c << ':' << amount << ',';
+    }
+    out << '\n';
 }
 
 }// namespace entropy

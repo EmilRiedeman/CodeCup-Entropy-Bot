@@ -13,22 +13,26 @@ inline uint simulate_game(CHAOS &&chaos, ORDER &&order) {
     ChipPool pool;
 
     for (uint move = 0; move < BOARD_AREA; ++move) {
+        if constexpr (PRINT) show_chip_pool(pool);
+
+        if (move) {
+            auto order_move = std::forward<ORDER>(order).suggest_order_move();
+
+            b.move_chip(order_move);
+            std::forward<CHAOS>(chaos).register_order_move(order_move);
+            std::forward<ORDER>(order).register_order_move(order_move);
+
+            if constexpr (PRINT) show_board(b.get_minimal_state());
+        }
+
         auto c = pool.random_chip(rand);
         pool = ChipPool(pool, c);
 
         auto chaos_move = std::forward<CHAOS>(chaos).suggest_chaos_move(c);
 
         b.place_chip(chaos_move);
-        chaos.register_chaos_move(chaos_move);
-        order.register_chaos_move(chaos_move);
-
-        if constexpr (PRINT) show_board(b.get_minimal_state());
-
-        auto order_move = std::forward<ORDER>(order).suggest_order_move();
-
-        b.move_chip(order_move);
-        chaos.register_order_move(order_move);
-        order.register_order_move(order_move);
+        std::forward<CHAOS>(chaos).register_chaos_move(chaos_move);
+        std::forward<ORDER>(order).register_chaos_move(chaos_move);
 
         if constexpr (PRINT) show_board(b.get_minimal_state());
     }

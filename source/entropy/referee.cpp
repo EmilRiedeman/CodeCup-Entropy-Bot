@@ -36,22 +36,21 @@ void start_as_order(ChaosMove last_move, Args &&...args) {
     ORDER order(std::forward<Args>(args)...);
     order.register_chaos_move(last_move);
     char str[5]{};
-    for (uint move = 0; move < BOARD_AREA; ++move) {
-        if (move) {
-            std::cin >> str;
-            std::cerr << str << '\n';
-            Colour colour = str[0] - '0';
-            auto pos = position_from_string(str + 1);
-
-            last_move = ChaosMove{pos, colour};
-            order.register_chaos_move(last_move);
-        }
+    for (uint move = 1; move < BOARD_AREA; ++move) {
         auto m = order.suggest_order_move();
         order.register_order_move(m);
 
         if (m.is_pass()) std::cout << last_move.pos << last_move.pos;
         else std::cout << m.from << m.to();
         std::cout << std::endl;
+
+        std::cin >> str;
+        std::cerr << str << '\n';
+        Colour colour = str[0] - '0';
+        auto pos = position_from_string(str + 1);
+
+        last_move = ChaosMove{pos, colour};
+        order.register_chaos_move(last_move);
     }
 }
 
