@@ -26,7 +26,7 @@ static constexpr uint8_t lookup_score(BoardString s) {
 }
 
 struct Position {
-    typedef uint IntType;
+    typedef uint32_t IntType;
     constexpr inline static IntType NONE_VALUE = std::numeric_limits<IntType>::max();
 
     IntType p = NONE_VALUE;
@@ -40,11 +40,11 @@ struct Position {
 
     [[nodiscard]] constexpr bool is_none() const { return p == NONE_VALUE; }
 
-    [[nodiscard]] constexpr uint index() const { return p; }
+    [[nodiscard]] constexpr IntType index() const { return p; }
 
-    [[nodiscard]] constexpr uint row() const { return p / BOARD_SIZE; }
+    [[nodiscard]] constexpr IntType row() const { return p / BOARD_SIZE; }
 
-    [[nodiscard]] constexpr uint column() const { return p % BOARD_SIZE; }
+    [[nodiscard]] constexpr IntType column() const { return p % BOARD_SIZE; }
 };
 
 struct ChipPool {

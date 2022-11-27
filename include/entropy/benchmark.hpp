@@ -156,6 +156,15 @@ inline void benchmark_rng() {
  * 29588ms
  * 29224ms
  * 28891ms
+ *
+ * base:
+ * 28054ms
+ * 27976ms
+ *
+ * uint8
+ * 29346ms
+ * 28729ms
+ * 29410ms
  */
 template <std::size_t ROLLOUTS = 100'000, std::size_t N = 200>
 inline void benchmark_mcts_ponder() {
