@@ -152,7 +152,7 @@ private:
     void record_score(uint score);
 
     BoardState board;
-    const ChipPool &pool;
+    const ChipPool pool;
     OrderNode *parent{};
     std::array<std::vector<std::unique_ptr<OrderNode>>, ChipPool::N> children{};
 
@@ -229,7 +229,7 @@ private:
     std::unique_ptr<OrderNode> order_node{};
     std::unique_ptr<ChaosNode> chaos_node{};
 
-    uint rollouts = 1'000'000;
+    uint rollouts = 125'000;
     float uct_temperature = 7;
 };
 

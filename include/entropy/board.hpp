@@ -70,7 +70,7 @@ struct ChipPool {
     }
 
     uint chips_left(Colour c) const {
-        if (--c) return prefix_sum[c] - prefix_sum[c - 1];
+        if (c - 1) return prefix_sum[c - 1] - prefix_sum[c - 2];
         return prefix_sum[0];
     }
 
