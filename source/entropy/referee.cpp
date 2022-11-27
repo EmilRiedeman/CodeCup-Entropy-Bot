@@ -41,7 +41,7 @@ void start_as_order(ChaosMove last_move, Args &&...args) {
         order.register_order_move(m);
 
         if (m.is_pass()) std::cout << last_move.pos << last_move.pos;
-        else std::cout << m.from << m.to();
+        else std::cout << m.from << m.to;
         std::cout << std::endl;
 
         std::cin >> str;

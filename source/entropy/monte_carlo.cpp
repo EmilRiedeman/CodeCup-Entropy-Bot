@@ -29,9 +29,10 @@ OrderNode::OrderNode(
 
 void OrderNode::init() {
     initialized = true;
-    unvisited = 1;
-    board.get_minimal_state().for_each_possible_order_move([this](auto a, auto b, auto c, auto d) {
-        moves[unvisited++] = OrderMove::Compact({a, b, c, d});
+
+    moves[unvisited++].make_pass();
+    board.get_minimal_state().for_each_possible_order_move([this](auto from, auto to) {
+        moves[unvisited++] = {from, to};
     });
 
     children.reserve(std::max(unvisited / 3, 2u));

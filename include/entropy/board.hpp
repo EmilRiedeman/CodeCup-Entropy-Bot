@@ -91,52 +91,42 @@ struct ChaosMove {
 
 struct OrderMove {
     Position from{};
-    Position::IntType t_index = Position::NONE_VALUE;
-    uint change{};
-    bool vertical{};
+    Position to{};
+
+    inline static OrderMove create(Position from, Position to) {
+        if (from.p == to.p) return {};
+        return {from, to};
+    }
+
+    bool operator==(const OrderMove &m) const { return (is_pass() && m.is_pass()) || (from.p == m.from.p && to.p == m.to.p); }
+
+    [[nodiscard]] bool is_pass() const { return from.p == Position::NONE_VALUE; }
+
+    [[nodiscard]] bool is_vertical() const { return from.column() == to.column(); }
 
     struct Compact {
-        constexpr static inline uint16_t PASS_VALUE = std::numeric_limits<uint16_t>::max();
-        uint16_t data = PASS_VALUE;
+        constexpr static inline uint8_t PASS_VALUE = std::numeric_limits<uint8_t>::max();
+        uint8_t from = 0;
+        uint8_t to = 0;
 
         Compact() = default;
 
-        Compact(const OrderMove &m) : data((m.from.p << 10) |
-                                           (m.t_index << 4) |
-                                           (m.change << 1) |
-                                           m.vertical) {}
+        template <typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
+        Compact(T from, T to) : from(from), to(to) {}
+
+        Compact(Position from, Position to) : from(from.p), to(to.p) {}
+
+        Compact(const OrderMove &m) : from(m.from.p), to(m.to.p) {
+            if (m.is_pass()) from = PASS_VALUE;
+        }
+
+        void make_pass() { from = PASS_VALUE; }
 
         [[nodiscard]] OrderMove create() const {
-            return (data == PASS_VALUE) ? OrderMove{}
-                                        : OrderMove{
-                                                  data >> 10,
-                                                  Position::IntType(data & 0b1111110000) >> 4,
-                                                  Position::IntType(data & 0b0000001110) >> 1,
-                                                  bool(data & 1)};
+            return (from == PASS_VALUE) ? OrderMove{}
+                                        : OrderMove{from, to};
         }
     };
-
-    bool operator==(const OrderMove &m) const {
-        return (is_pass() && m.is_pass()) || (from.p == m.from.p && t_index == m.t_index);
-    }
-
-    inline static OrderMove create(Position from, Position to) {
-        OrderMove r = {from};
-        if (from.p == to.p) return r;
-        r.t_index = to.index();
-        if (from.row() == to.row()) {
-            r.vertical = false;
-            r.change = to.column();
-        } else {
-            r.vertical = true;
-            r.change = to.row();
-        }
-        return r;
-    }
-
-    [[nodiscard]] Position to() const { return {t_index}; }
-
-    [[nodiscard]] bool is_pass() const { return t_index == Position::NONE_VALUE; }
 };
 
 class MinimalBoardState {
@@ -195,19 +185,19 @@ private:
 
         std::array<Position, BOARD_SIZE> vertical_from{};
         auto it = cells_begin() + (BOARD_AREA - 1) * !LEFT_TO_RIGHT;
-        Position::IntType pos_index = LEFT_TO_RIGHT ? 0 : (BOARD_AREA - 1);
+        Position pos = LEFT_TO_RIGHT ? 0 : (BOARD_AREA - 1);
         for (uint row = line_start; row < BOARD_SIZE; row += step) {
             Position horizontal_from{};
             for (uint column = line_start; column < BOARD_SIZE; column += step) {
                 if (*it) {
-                    vertical_from[column].p = horizontal_from.p = pos_index;
+                    vertical_from[column].p = horizontal_from.p = pos.p;
                 } else {
-                    if (!horizontal_from.is_none()) std::forward<Function>(f)(horizontal_from, pos_index, column, false);
-                    if (!vertical_from[column].is_none()) std::forward<Function>(f)(vertical_from[column], pos_index, row, true);
+                    if (!horizontal_from.is_none()) std::forward<Function>(f)(horizontal_from, pos);
+                    if (!vertical_from[column].is_none()) std::forward<Function>(f)(vertical_from[column], pos);
                 }
 
                 it += step;
-                pos_index += step;
+                pos.p += step;
             }
         }
     }
@@ -243,12 +233,13 @@ public:
 
     void move_chip(const OrderMove &move) {
         if (move.is_pass()) return;
-        if (move.vertical) move_chip<true>(move.from, move.t_index, move.change);
-        else move_chip<false>(move.from, move.t_index, move.change);
+
+        if (move.is_vertical()) move_chip<true>(move.from, move.to);
+        else move_chip<false>(move.from, move.to);
     }
 
     template <bool VERTICAL>
-    void move_chip(Position from, Position to, uint x) {
+    void move_chip(Position from, Position to) {
         const auto f_row = from.row();
         const auto f_column = from.column();
 
@@ -257,8 +248,8 @@ public:
         if (!VERTICAL || horizontal_score[f_row]) update_horizontal_score(f_row);
         if (VERTICAL || vertical_score[f_column]) update_vertical_score(f_column);
 
-        if constexpr (VERTICAL) update_horizontal_score(x);
-        else update_vertical_score(x);
+        if constexpr (VERTICAL) update_horizontal_score(to.row());
+        else update_vertical_score(to.column());
     }
 
 private:

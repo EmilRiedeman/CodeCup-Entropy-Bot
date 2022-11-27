@@ -37,8 +37,8 @@ public:
     OrderMove suggest_order_move() override {
         std::vector<OrderMove> possible_moves{{}};
 
-        board.get_minimal_state().for_each_possible_order_move([&possible_moves](Position from, uint to, uint x, bool vert) {
-            possible_moves.emplace_back(OrderMove{from, to, x, vert});
+        board.get_minimal_state().for_each_possible_order_move([&possible_moves](auto from, auto to) {
+            possible_moves.emplace_back(OrderMove{from, to});
         });
 
         return *random_element(possible_moves.begin(), possible_moves.size(), gen);

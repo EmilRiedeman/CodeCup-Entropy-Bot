@@ -15,7 +15,6 @@ int main(int argc, const char *args[]) {
         }
         if (!std::strcmp(args[1], "competition")) {
             simulate_game<true>(mcts::MoveMaker(), mcts::MoveMaker());
-            return 0;
             uint total_score = 0;
             uint N = 100;
             for (uint i = 0; i < N; ++i)
