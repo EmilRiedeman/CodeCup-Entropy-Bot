@@ -134,8 +134,7 @@ public:
     void clear_colours(uint keep) {
         for (uint c = 0; c < children.size(); ++c) {
             if (c == keep - 1) continue;
-            unvisited_moves[c].clear();
-            unvisited_moves[c].shrink_to_fit();
+            unvisited_moves[c] = {};
 
             children[c].clear();
 

@@ -163,7 +163,7 @@ OrderNode *ChaosNode::add_random_child(Colour colour) {
 
     *it = unvisited_moves[index].back();
     unvisited_moves[index].pop_back();
-    if (unvisited_moves[index].empty()) unvisited_moves[index].shrink_to_fit();
+    if (unvisited_moves[index].empty()) unvisited_moves[index] = {};
 
     children[index].push_back(std::make_unique<OrderNode>(
             this,
