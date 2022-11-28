@@ -18,6 +18,9 @@ inline uint rollout_board(const BoardState &b) {
     return b.get_total_score();
 }
 
+uint smart_rollout_order(const BoardState &board, const ChipPool &pool);
+uint smart_rollout_chaos(const BoardState &board, const ChipPool &pool);
+
 inline float uct_score(float s, float logN, float n, float temperature) {
     return s + temperature * std::sqrt(logN / n);
 }
@@ -67,8 +70,6 @@ private:
 
     void record_score(uint score);
 
-    constexpr static std::size_t MAX_POSSIBLE_MOVES = 110;// not safe size maybe ???
-
     BoardState board;
     const ChipPool pool;
     ChaosNode *parent{};
@@ -79,7 +80,7 @@ private:
     uint total_visits{};
     uint total_score{};
 
-    std::array<OrderMove::Compact, MAX_POSSIBLE_MOVES> moves{};
+    std::array<OrderMove::Compact, MAX_POSSIBLE_ORDER_MOVES> moves{};
     uint unvisited{};
 
     bool initialized = false;

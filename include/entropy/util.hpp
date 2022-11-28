@@ -21,7 +21,7 @@ struct FastRand {
 };
 
 template <typename RandomAccessIterator, typename Generator>
-RandomAccessIterator random_element(RandomAccessIterator begin, uint n, Generator &&gen) {
+RandomAccessIterator random_element(RandomAccessIterator begin, typename std::remove_reference_t<Generator>::result_type n, Generator &&gen) {
     return begin +
            std::uniform_int_distribution<typename std::remove_reference_t<Generator>::result_type>{
                    0, n - 1}(std::forward<Generator>(gen));

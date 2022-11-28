@@ -4,6 +4,57 @@ namespace entropy::mcts {
 
 FastRand RNG{};
 
+inline void do_smart_order_move(BoardState &board,
+                                OrderMove::Compact *moves_buf) {
+    uint n = 0;
+    board.get_minimal_state().for_each_possible_order_move([=](auto from, auto to) {
+
+    });
+}
+
+inline void do_smart_chaos_move(BoardState &board,
+                                std::array<uint8_t, BOARD_AREA> &chips,
+                                uint8_t *moves_buf) {
+    auto rand_it = random_element(chips.begin(), board.get_open_cells(), RNG);
+    const Colour colour = *rand_it;
+    *rand_it = chips[board.get_open_cells()];
+}
+
+inline void smart_rollout_helper(BoardState &board,
+                                 std::array<uint8_t, BOARD_AREA> &chips,
+                                 OrderMove::Compact *o_moves_buf,
+                                 uint8_t *c_moves_buf) {
+    while (board.get_open_cells()) {
+        do_smart_order_move(board, o_moves_buf);
+        do_smart_chaos_move(board, chips, c_moves_buf);
+    }
+}
+
+uint smart_rollout_order(const BoardState &original, const ChipPool &pool) {
+    auto chips = pool.create_array();
+    BoardState copy = original;
+
+    OrderMove::Compact o_moves_buf[MAX_POSSIBLE_ORDER_MOVES];
+    uint8_t c_moves_buf[BOARD_AREA];
+
+    smart_rollout_helper(copy, chips, o_moves_buf, c_moves_buf);
+
+    return copy.get_total_score();
+}
+
+uint smart_rollout_chaos(const BoardState &original, const ChipPool &pool) {
+    auto chips = pool.create_array();
+    BoardState copy = original;
+
+    OrderMove::Compact o_moves_buf[MAX_POSSIBLE_ORDER_MOVES];
+    uint8_t c_moves_buf[BOARD_AREA];
+
+    do_smart_chaos_move(copy, chips, c_moves_buf);
+    smart_rollout_helper(copy, chips, o_moves_buf, c_moves_buf);
+
+    return copy.get_total_score();
+}
+
 template <typename T, typename F>
 inline T *select_child_helper(const std::vector<std::unique_ptr<T>> &vec, F &&evaluator) {
     auto best_score = std::forward<F>(evaluator)(*vec.front());

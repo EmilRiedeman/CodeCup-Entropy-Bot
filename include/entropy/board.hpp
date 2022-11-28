@@ -9,17 +9,19 @@
 
 namespace entropy {
 
-constexpr const inline uint BOARD_SIZE = 7;
-constexpr const inline uint BOARD_AREA = BOARD_SIZE * BOARD_SIZE;
-constexpr const inline uint BOARD_COLOURS = 8;
-constexpr const inline uint BOARD_CHIPS = BOARD_AREA / (BOARD_COLOURS - 1);
+constexpr inline uint BOARD_SIZE = 7;
+constexpr inline uint BOARD_AREA = BOARD_SIZE * BOARD_SIZE;
+constexpr inline uint BOARD_COLOURS = 8;
+constexpr inline uint BOARD_CHIPS = BOARD_AREA / (BOARD_COLOURS - 1);
+
+constexpr inline std::size_t MAX_POSSIBLE_ORDER_MOVES = 110;// not safe size maybe ???
 
 static_assert(BOARD_CHIPS * (BOARD_COLOURS - 1) == BOARD_AREA);
 
 using Colour = uint8_t;
 using BoardString = NumberString<BOARD_COLOURS>;
 
-constexpr static inline auto SCORE_LOOKUP_TABLE = score_lookup_table<BOARD_COLOURS, BOARD_SIZE>();
+constexpr inline auto SCORE_LOOKUP_TABLE = score_lookup_table<BOARD_COLOURS, BOARD_SIZE>();
 
 static constexpr uint8_t lookup_score(BoardString s) {
     return SCORE_LOOKUP_TABLE[s];
@@ -74,8 +76,17 @@ struct ChipPool {
         return prefix_sum[0];
     }
 
+    auto create_array() const {
+        std::array<uint8_t, BOARD_AREA> r{};
+        auto it = r.begin();
+
+        it = std::fill_n(it, prefix_sum[0], 1);
+        for (uint i = 1; i < N; ++i) it = std::fill_n(it, prefix_sum[i] - prefix_sum[i - 1], i + 1);
+        return r;
+    }
+
     template <typename RandomGenerator>
-    constexpr Colour random_chip(RandomGenerator &&gen) const {
+    Colour random_chip(RandomGenerator &&gen) const {
         return Colour(std::upper_bound(prefix_sum.begin(), prefix_sum.end(), distribution(gen)) - prefix_sum.begin() + 1);
     }
 };
