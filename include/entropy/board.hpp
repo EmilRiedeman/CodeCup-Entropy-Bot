@@ -263,6 +263,19 @@ public:
         else update_vertical_score(to.column());
     }
 
+    int remove_chip_score_differance(Position pos) const {
+    }
+
+    template <typename Function>
+    void for_each_possible_order_move_score_differance(Function &&f) const {
+        constexpr int UNINITIALIZED_VALUE = std::numeric_limits<int>::max();
+        auto scores = create_array<BOARD_AREA>(UNINITIALIZED_VALUE);
+
+        minimal_state.for_each_possible_order_move([&scores](auto from, auto to) {
+            if (scores[from.p] == UNINITIALIZED_VALUE) scores[from.p] = 0;
+        });
+    }
+
 private:
     void update_horizontal_score(uint row) { update_score(horizontal_score[row], minimal_state.get_horizontal_score(row)); }
 

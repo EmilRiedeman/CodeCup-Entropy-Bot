@@ -80,4 +80,14 @@ constexpr auto generate_array(Generator g)
     return generate_array_helper(g, gen_seq<N>{});
 }
 
+template <typename T, std::size_t... Is>
+constexpr std::array<T, sizeof...(Is)> create_array(T value, std::index_sequence<Is...>) {
+    return {{(static_cast<void>(Is), value)...}};
+}
+
+template <std::size_t N, typename T>
+constexpr std::array<T, N> create_array(const T &value) {
+    return create_array(value, std::make_index_sequence<N>());
+}
+
 }// namespace entropy
