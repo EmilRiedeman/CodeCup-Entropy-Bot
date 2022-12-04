@@ -56,28 +56,15 @@ struct LookupPow {
     };
 };
 
-template <std::size_t... Is>
-struct seq {
-};
-
-template <std::size_t N, std::size_t... Is>
-struct gen_seq : gen_seq<N - 1, N - 1, Is...> {
-};
-
-template <std::size_t... Is>
-struct gen_seq<0, Is...> : seq<Is...> {
-};
-
-template <class Generator, std::size_t... Is>
-constexpr auto generate_array_helper(Generator g, seq<Is...>)
-        -> std::array<decltype(g(std::size_t{}, sizeof...(Is))), sizeof...(Is)> {
-    return {{g(Is, sizeof...(Is))...}};
+template <typename Generator, std::size_t... Is>
+constexpr auto generate_array(Generator &&g, std::index_sequence<Is...>)
+        -> std::array<decltype(std::forward<Generator>(g)(std::size_t{}, sizeof...(Is))), sizeof...(Is)> {
+    return {{std::forward<Generator>(g)(Is, sizeof...(Is))...}};
 }
 
-template <std::size_t N, class Generator>
-constexpr auto generate_array(Generator g)
-        -> decltype(generate_array_helper(g, gen_seq<N>{})) {
-    return generate_array_helper(g, gen_seq<N>{});
+template <std::size_t N, typename Generator>
+constexpr decltype(auto) generate_array(Generator &&g) {
+    return generate_array_helper(std::forward<Generator>(g), std::make_index_sequence<N>{});
 }
 
 template <typename T, std::size_t... Is>

@@ -21,7 +21,7 @@ static_assert(BOARD_CHIPS * (BOARD_COLOURS - 1) == BOARD_AREA);
 using Colour = uint8_t;
 using BoardString = NumberString<BOARD_COLOURS>;
 
-constexpr inline auto SCORE_LOOKUP_TABLE = score_lookup_table<BOARD_COLOURS, BOARD_SIZE>();
+constexpr inline auto SCORE_LOOKUP_TABLE = generate_base_score_lookup_table<BOARD_COLOURS, BOARD_SIZE>();
 
 static constexpr uint8_t lookup_score(BoardString s) {
     return SCORE_LOOKUP_TABLE[s];
@@ -159,9 +159,9 @@ public:
         cells[from.index()] = 0;
     }
 
-    [[nodiscard]] uint8_t get_horizontal_score(uint row) const { return lookup_score(get_sorted_string<BOARD_COLOURS, BOARD_SIZE, 1>(&cells[row * BOARD_SIZE])); }
+    [[nodiscard]] uint8_t get_horizontal_score(uint row) const { return lookup_score(get_palindrome_string_equivalent<BOARD_COLOURS, BOARD_SIZE, 1>(&cells[row * BOARD_SIZE])); }
 
-    [[nodiscard]] uint8_t get_vertical_score(uint column) const { return lookup_score(get_sorted_string<BOARD_COLOURS, BOARD_SIZE, BOARD_SIZE>(&cells[column])); }
+    [[nodiscard]] uint8_t get_vertical_score(uint column) const { return lookup_score(get_palindrome_string_equivalent<BOARD_COLOURS, BOARD_SIZE, BOARD_SIZE>(&cells[column])); }
 
     [[nodiscard]] uint get_total_score() const {
         uint r = 0;
