@@ -17,6 +17,8 @@ public:
 
     [[nodiscard]] constexpr uint read_first() const { return hash % C; }
 
+    [[nodiscard]] constexpr uint read_first(uint i) const { return hash % POWER_TABLE[i]; }
+
     [[nodiscard]] constexpr NumberString set_empty_copy(uint i, uint c) const { return {hash + POWER_TABLE[i] * c}; }
 
     constexpr void set_empty(uint i, uint c) { hash += POWER_TABLE[i] * c; }
@@ -50,6 +52,8 @@ public:
 
     [[nodiscard]] constexpr uint read_first() const { return hash & BIT_MASK; }
 
+    [[nodiscard]] constexpr uint read_first(uint i) const { return hash & (1u << ((BITS_PER_MASK * i) - 1)); }
+
     constexpr NumberString set_empty_copy(uint i, uint c) const { return {hash | (c << (i * BITS_PER_MASK))}; }
 
     constexpr void set_empty(uint i, uint c) { hash |= c << (i * BITS_PER_MASK); }
@@ -69,41 +73,6 @@ public:
         return array;
     }
 };
-
-
-template <uint C, uint N, std::ptrdiff_t STEP, typename ConstIterator>
-constexpr NumberString<C> get_palindrome_string_equivalent(ConstIterator it) {
-    uint translate[C]{};
-
-    uint &next_number = translate[0];
-    next_number = 1;
-
-    NumberString<C> s{};
-    for (uint i = 0; i < N; ++i, it += STEP) {
-        if (*it) {
-            if (i - 2 < N && *(it - STEP * 2) != 0 && *(it - STEP) == 0) {
-                s.set_empty(i - 1, next_number++);
-            }
-            if (!translate[*it]) translate[*it] = next_number++;
-            s.set_empty(i, translate[*it]);
-        }
-    }
-    return s;
-}
-
-template <uint C, uint N>
-constexpr NumberString<C> get_palindrome_string_equivalent(NumberString<C> original) {
-    uint translate[C]{1};
-
-    NumberString<C> s{};
-    for (uint i = 0; original.hash; ++i, original.shift_right_once()) {
-        if (auto v = original.read_first()) {
-            if (!translate[v]) translate[v] = (*translate)++;
-            s.set_empty(i, translate[v]);
-        }
-    }
-    return s;
-}
 
 template <uint C>
 constexpr inline uint8_t count(NumberString<C> string, uint left, uint right, const uint begin, const uint end) {
@@ -155,44 +124,79 @@ constexpr decltype(auto) generate_base_score_lookup_table() {
     return result;
 }
 
-template <uint C, uint N, uint P>
-constexpr decltype(auto) generate_partial_string_equivalent_lookup_table(uint prefix) {
-    std::array<uint, LookupPow<uint>::calculate<C, N - P>> result{};
-    auto it = result.data();
 
-    for (uint i = 0; i < result.size(); ++i) {
+template <uint C, uint N, std::ptrdiff_t STEP, typename ConstIterator>
+constexpr NumberString<C> get_palindrome_string_equivalent(ConstIterator it) {
+    uint translate[C]{};
+
+    uint &next_number = translate[0];
+    next_number = 1;
+
+    NumberString<C> s{};
+    for (uint i = 0; i < N; ++i, it += STEP) {
+        if (*it) {
+            if (i - 2 < N && *(it - STEP * 2) != 0 && *(it - STEP) == 0) {
+                s.set_empty(i - 1, next_number++);
+            }
+            if (!translate[*it]) translate[*it] = next_number++;
+            s.set_empty(i, translate[*it]);
+        }
+    }
+    return s;
+}
+
+template <uint C, uint N>
+constexpr NumberString<C> get_palindrome_string_equivalent(NumberString<C> original) {
+    uint translate[C]{1};
+
+    NumberString<C> s{};
+    for (uint i = 0; original.hash; ++i, original.shift_right_once()) {
+        if (auto v = original.read_first()) {
+            if (!translate[v]) translate[v] = (*translate)++;
+            s.set_empty(i, translate[v]);
+        }
+    }
+    return s;
+}
+
+template <uint C, uint N, uint P>
+constexpr decltype(auto) generate_partial_string_equivalent_lookup_table(uint suffix) {
+    std::array<uint, LookupPow<uint>::calculate<C, N - P>> r{};
+    auto it = r.data();
+    const auto end = it + r.size();
+
+    NumberString<C> str{suffix};
+    str.shift_left(N - P);
+    for (; it != end; ++str.hash) {
         /*
         uint translate[C]{1};
 
-        uint o = i;
+        uint o = (i << 6) + prefix;
         for (uint x = 0; o; x += 3, o >>= 3) {
             if (auto v = o & 0b111) {
                 if (!translate[v]) translate[v] = (*translate)++;
-                it->hash |= (translate[v] << x);
+                *it |= (translate[v] << x);
             }
         }
 
         ++it;
-         */
-        NumberString<C> str{i};
-        str.shift_left(P);
-        str.hash += prefix;
+*/
         *(it++) = get_palindrome_string_equivalent<C, N>(str);
     }
 
-    return result;
+    return r;
 }
 
-template <uint C, uint N, uint P, uint... I, typename = std::enable_if_t<LookupPow<uint>::calculate<C, P> == sizeof...(I)>>
+template <uint C, uint N, uint P, uint... I, typename = std::enable_if_t<C * P == sizeof...(I)>>
 constexpr decltype(auto) generate_complete_string_equivalent_lookup_table(std::integer_sequence<uint, I...>) {
-    return std::array<std::array<uint, LookupPow<uint>::calculate<C, N - P>>, sizeof...(I)>{
+    return std::array<std::array<uint, LookupPow<uint>::calculate<C, N - P>>, C * P>{
             generate_partial_string_equivalent_lookup_table<C, N, P>(I)...,
     };
 }
 
 template <uint C, uint N, uint P>
 constexpr decltype(auto) generate_complete_string_equivalent_lookup_table() {
-    return generate_complete_string_equivalent_lookup_table<C, N, P>(std::make_integer_sequence<uint, LookupPow<uint>::calculate<C, P>>());
+    return generate_complete_string_equivalent_lookup_table<C, N, P>(std::make_integer_sequence<uint, C * P>());
 }
 
 }// namespace entropy
