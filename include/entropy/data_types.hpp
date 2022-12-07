@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
+
 namespace entropy {
 
-using uint = unsigned int;
+using uint = std::uint32_t;
 
 }
