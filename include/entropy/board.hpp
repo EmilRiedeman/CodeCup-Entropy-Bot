@@ -269,8 +269,8 @@ public:
 
         minimal_state.move_chip(from, to);
 
-        total_score += old_score + minimal_state.get_score(f_row, f_column) +
-                       lookup_score(VERTICAL ? minimal_state.get_horizontal_string(to.row()) : minimal_state.get_vertical_string(to.column()));
+        total_score += minimal_state.get_score(f_row, f_column) +
+                       lookup_score(VERTICAL ? minimal_state.get_horizontal_string(to.row()) : minimal_state.get_vertical_string(to.column())) - old_score;
     }
 
     template <typename Function>
