@@ -22,10 +22,10 @@ using Colour = uint8_t;
 using BoardString = NumberString<BOARD_COLOURS>;
 
 constexpr inline auto PARTIAL_SCORE_LOOKUP_TABLE = generate_base_score_lookup_table<BOARD_COLOURS, BOARD_SIZE>();
-const auto PALINDROME_STRING_EQUIVALENT_LOOKUP_TABLE = generate_complete_string_equivalent_lookup_table<BOARD_COLOURS, BOARD_SIZE, 0>();
+const auto COMPLETE_SCORE_LOOKUP_TABLE = generate_complete_score_lookup_table<BOARD_COLOURS, BOARD_SIZE, 0>(PARTIAL_SCORE_LOOKUP_TABLE);
 
 inline uint8_t lookup_score(BoardString s) {
-    return PARTIAL_SCORE_LOOKUP_TABLE[PALINDROME_STRING_EQUIVALENT_LOOKUP_TABLE[0][s.hash]];
+    return COMPLETE_SCORE_LOOKUP_TABLE[0][s.hash];
 }
 
 struct Position {
