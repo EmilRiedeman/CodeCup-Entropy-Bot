@@ -3,6 +3,9 @@
 #include "data_types.hpp"
 #include "util.hpp"
 
+#include <tuple>
+#include <utility>
+
 namespace entropy {
 
 template <uint C, typename = void>
@@ -94,27 +97,27 @@ constexpr inline uint8_t score_string(NumberString<C> string, const uint begin, 
     return score;
 }
 
-template <uint C, uint STOP, uint N>
+template <uint C, uint N, uint ARRAY_LEN>
 constexpr void compute_score_table(
-        std::array<std::uint8_t, N> &table,
+        std::array<std::uint8_t, ARRAY_LEN> &table,
         NumberString<C> cur_sequence = {},
         uint colours = 1,
         uint begin = 0,
         uint end = 0,
         uint prev_score = 0) {
-    if (end >= STOP) return;
-    compute_score_table<C, STOP, N>(table, cur_sequence, colours, end + 1, end + 1, table[cur_sequence]);
+    if (end >= N) return;
+    compute_score_table<C, N, ARRAY_LEN>(table, cur_sequence, colours, end + 1, end + 1, table[cur_sequence]);
 
     for (uint c = 1; c < colours; ++c) {
         auto next_seq = cur_sequence.set_empty_copy(end, c);
         table[next_seq] = score_string<C>(next_seq, begin, end) + prev_score;
-        compute_score_table<C, STOP, N>(table, next_seq, colours, begin, end + 1, prev_score);
+        compute_score_table<C, N, ARRAY_LEN>(table, next_seq, colours, begin, end + 1, prev_score);
     }
 
     if (colours >= C) return;
     auto next_seq = cur_sequence.set_empty_copy(end, colours);
     table[next_seq] = table[cur_sequence];
-    compute_score_table<C, STOP, N>(table, next_seq, colours + 1, begin, end + 1, prev_score);
+    compute_score_table<C, N, ARRAY_LEN>(table, next_seq, colours + 1, begin, end + 1, prev_score);
 }
 
 template <uint C, uint N>
@@ -146,21 +149,26 @@ constexpr NumberString<C> get_palindrome_string_equivalent(ConstIterator it) {
 }
 
 template <uint C, uint N>
-constexpr NumberString<C> get_palindrome_string_equivalent(NumberString<C> original) {
+constexpr uint get_palindrome_string_equivalent(NumberString<C> original) {
     uint translate[C]{1};
 
     NumberString<C> s{};
-    for (uint i = 0; original.hash; ++i, original.shift_right_once()) {
+    for (uint i = 0, prev = 0; original.hash; ++i, original.shift_right_once()) {
         if (auto v = original.read_first()) {
             if (!translate[v]) translate[v] = (*translate)++;
             s.set_empty(i, translate[v]);
+
+            prev = v;
+        } else {
+            if (prev && original.read(1)) s.set_empty(i, (*translate)++);
+            prev = 0;
         }
     }
-    return s;
+    return s.hash;
 }
 
 template <uint C, uint N, uint P>
-constexpr decltype(auto) generate_partial_string_equivalent_lookup_table(uint suffix) {
+/* constexpr */ decltype(auto) generate_partial_string_equivalent_lookup_table(uint suffix) {
     std::array<uint, LookupPow<uint>::calculate<C, N - P>> r{};
     auto it = r.data();
     const auto end = it + r.size();
@@ -168,35 +176,22 @@ constexpr decltype(auto) generate_partial_string_equivalent_lookup_table(uint su
     NumberString<C> str{suffix};
     str.shift_left(N - P);
     for (; it != end; ++str.hash) {
-        /*
-        uint translate[C]{1};
-
-        uint o = (i << 6) + prefix;
-        for (uint x = 0; o; x += 3, o >>= 3) {
-            if (auto v = o & 0b111) {
-                if (!translate[v]) translate[v] = (*translate)++;
-                *it |= (translate[v] << x);
-            }
-        }
-
-        ++it;
-*/
         *(it++) = get_palindrome_string_equivalent<C, N>(str);
     }
 
     return r;
 }
 
-template <uint C, uint N, uint P, uint... I, typename = std::enable_if_t<C * P == sizeof...(I)>>
-constexpr decltype(auto) generate_complete_string_equivalent_lookup_table(std::integer_sequence<uint, I...>) {
-    return std::array<std::array<uint, LookupPow<uint>::calculate<C, N - P>>, C * P>{
+template <uint C, uint N, uint P, uint... I>
+/* constexpr */ decltype(auto) generate_complete_string_equivalent_lookup_table(std::integer_sequence<uint, I...>) {
+    return std::array<std::array<uint, LookupPow<uint>::calculate<C, N - P>>, sizeof...(I)>{
             generate_partial_string_equivalent_lookup_table<C, N, P>(I)...,
     };
 }
 
 template <uint C, uint N, uint P>
-constexpr decltype(auto) generate_complete_string_equivalent_lookup_table() {
-    return generate_complete_string_equivalent_lookup_table<C, N, P>(std::make_integer_sequence<uint, C * P>());
+/* constexpr */ decltype(auto) generate_complete_string_equivalent_lookup_table() {
+    return generate_complete_string_equivalent_lookup_table<C, N, P>(std::make_integer_sequence<uint, LookupPow<uint>::calculate<C, P>>());
 }
 
 }// namespace entropy
