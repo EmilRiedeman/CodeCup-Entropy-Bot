@@ -143,30 +143,42 @@ struct OrderMove {
 
 class MinimalBoardState {
 public:
-    using CellArray = std::array<Colour, BOARD_AREA>;
-    using CellIterator = CellArray::pointer;
-    using ConstCellIterator = CellArray::const_pointer;
-
     MinimalBoardState() = default;
 
     MinimalBoardState(const MinimalBoardState &) = default;
 
-    void place_chip(Position p, Colour c) { cells[p.index()] = c; }
+    [[nodiscard]] uint read_chip(uint row, uint column) const { return horizontal[row].read(column); }
 
-    void remove_chip(Position p) { cells[p.index()] = 0; }
-
-    void move_chip(Position from, Position to) {
-        cells[to.index()] = cells[from.index()];
-        cells[from.index()] = 0;
+    void place_chip(uint row, uint column, Colour c) {
+        horizontal[row].set_at_empty(column, c);
+        vertical[column].set_at_empty(row, c);
     }
 
-    [[nodiscard]] uint8_t get_horizontal_score(uint row) const { return lookup_score(get_palindrome_string_equivalent<BOARD_COLOURS, BOARD_SIZE, 1>(&cells[row * BOARD_SIZE])); }
+    void remove_chip(uint row, uint column) {
+        horizontal[row].set_empty(column);
+        vertical[column].set_empty(row);
+    }
 
-    [[nodiscard]] uint8_t get_vertical_score(uint column) const { return lookup_score(get_palindrome_string_equivalent<BOARD_COLOURS, BOARD_SIZE, BOARD_SIZE>(&cells[column])); }
+    void move_chip(Position from, Position to) {
+        const auto f_row = from.row();
+        const auto f_column = from.column();
+
+        const auto t_row = to.row();
+        const auto t_column = to.column();
+
+        place_chip(t_row, t_column, read_chip(f_row, f_column));
+        remove_chip(f_row, f_column);
+    }
+
+    [[nodiscard]] BoardString get_horizontal_string(uint row) const { return horizontal[row]; }
+
+    [[nodiscard]] BoardString get_vertical_string(uint column) const { return vertical[column]; }
+
+    [[nodiscard]] uint get_score(uint row, uint column) const { return lookup_score(horizontal[row]) + lookup_score(vertical[column]); }
 
     [[nodiscard]] uint get_total_score() const {
         uint r = 0;
-        for (uint i = 0; i < BOARD_SIZE; ++i) r += get_horizontal_score(i) + get_vertical_score(i);
+        for (uint i = 0; i < BOARD_SIZE; ++i) r += lookup_score(horizontal[i]) + lookup_score(vertical[i]);
         return r;
     }
 
@@ -178,49 +190,45 @@ public:
 
     template <typename Function>
     void for_each_empty_space(Function &&f) const {
-        auto begin = cells_begin();
-        auto end = cells_end();
-        Position::IntType p{};
-        for (auto it = begin; it != end; ++it, ++p)
-            if (!*it) std::forward<Function>(f)(Position{p});
+        Position p{0};
+        for (uint row = 0; row < BOARD_SIZE; ++row) {
+            auto str = horizontal[row];
+            for (uint column = 0; column < BOARD_SIZE; ++column, ++p.p) {
+                if (!str.read_first()) std::forward<Function>(f)(p);
+                str.shift_right_once();
+            }
+        }
     }
-
-    [[nodiscard]] ConstCellIterator cells_begin() const { return cells.cbegin(); }
-
-    [[nodiscard]] ConstCellIterator cells_end() const { return cells.cend(); }
 
 private:
     template <bool LEFT_TO_RIGHT, typename Function>
     void for_each_possible_order_move_helper(Function &&f) const {
-        constexpr int step = LEFT_TO_RIGHT ? 1 : -1;
-        constexpr uint line_start = LEFT_TO_RIGHT ? 0 : (BOARD_SIZE - 1);
+        constexpr int STEP = LEFT_TO_RIGHT ? 1 : -1;
+        constexpr uint START = LEFT_TO_RIGHT ? 0 : (BOARD_SIZE - 1);
 
         std::array<Position, BOARD_SIZE> vertical_from{};
-        auto it = cells_begin() + (BOARD_AREA - 1) * !LEFT_TO_RIGHT;
         Position pos = LEFT_TO_RIGHT ? 0 : (BOARD_AREA - 1);
-        for (uint row = line_start; row < BOARD_SIZE; row += step) {
+        for (uint row = START; row < BOARD_SIZE; row += STEP) {
             Position horizontal_from{};
-            for (uint column = line_start; column < BOARD_SIZE; column += step) {
-                if (*it) {
+            for (uint column = START; column < BOARD_SIZE; column += STEP) {
+                if (read_chip(row, column)) {
                     vertical_from[column].p = horizontal_from.p = pos.p;
                 } else {
                     if (!horizontal_from.is_none()) std::forward<Function>(f)(horizontal_from, pos);
                     if (!vertical_from[column].is_none()) std::forward<Function>(f)(vertical_from[column], pos);
                 }
 
-                it += step;
-                pos.p += step;
+                pos.p += STEP;
             }
         }
     }
 
-    CellArray cells{};
+    std::array<BoardString, BOARD_SIZE> horizontal{};
+    std::array<BoardString, BOARD_SIZE> vertical{};
 };
 
 class BoardState {
 public:
-    using ScoreArray = std::array<uint8_t, BOARD_SIZE>;
-
     BoardState() = default;
 
     BoardState(const BoardState &) = default;
@@ -231,15 +239,16 @@ public:
 
     [[nodiscard]] uint get_total_score() const { return total_score; }
 
-    [[nodiscard]] const ScoreArray &get_vertical_score() const { return vertical_score; }
-
-    [[nodiscard]] const ScoreArray &get_horizontal_score() const { return horizontal_score; }
-
     void place_chip(const ChaosMove &move) {
-        minimal_state.place_chip(move.pos, move.colour);
+        const auto row = move.pos.row();
+        const auto column = move.pos.column();
 
-        update_horizontal_score(move.pos.row());
-        update_vertical_score(move.pos.column());
+        const uint old_score = minimal_state.get_score(row, column);
+
+        minimal_state.place_chip(row, column, move.colour);
+
+        total_score += minimal_state.get_score(row, column) - old_score;
+
         --open_cells;
     }
 
@@ -255,16 +264,13 @@ public:
         const auto f_row = from.row();
         const auto f_column = from.column();
 
+        const auto old_score = minimal_state.get_score(f_row, f_column) +
+                               lookup_score(VERTICAL ? minimal_state.get_horizontal_string(to.row()) : minimal_state.get_vertical_string(to.column()));
+
         minimal_state.move_chip(from, to);
 
-        if (!VERTICAL || horizontal_score[f_row]) update_horizontal_score(f_row);
-        if (VERTICAL || vertical_score[f_column]) update_vertical_score(f_column);
-
-        if constexpr (VERTICAL) update_horizontal_score(to.row());
-        else update_vertical_score(to.column());
-    }
-
-    int remove_chip_score_differance(Position pos) const {
+        total_score += old_score + minimal_state.get_score(f_row, f_column) +
+                       lookup_score(VERTICAL ? minimal_state.get_horizontal_string(to.row()) : minimal_state.get_vertical_string(to.column()));
     }
 
     template <typename Function>
@@ -278,19 +284,7 @@ public:
     }
 
 private:
-    void update_horizontal_score(uint row) { update_score(horizontal_score[row], minimal_state.get_horizontal_score(row)); }
-
-    void update_vertical_score(uint column) { update_score(vertical_score[column], minimal_state.get_vertical_score(column)); }
-
-    void update_score(ScoreArray::value_type &old_score, ScoreArray::value_type new_score) {
-        total_score += new_score - old_score;
-        old_score = new_score;
-    }
-
     MinimalBoardState minimal_state;
-
-    ScoreArray vertical_score{};
-    ScoreArray horizontal_score{};
 
     uint open_cells = BOARD_AREA;
     uint total_score = 0;

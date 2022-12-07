@@ -25,13 +25,13 @@ public:
     RandomMoveMaker() : RandomMoveMaker(std::random_device()()) {}
 
     ChaosMove suggest_chaos_move(Colour colour) override {
-        const uint r = std::uniform_int_distribution<uint>(0, board.get_open_cells() - 1)(gen);
-        auto begin = board.get_minimal_state().cells_begin();
-        auto end = board.get_minimal_state().cells_end();
+        const uint rand = std::uniform_int_distribution<uint>(0, board.get_open_cells() - 1)(gen);
+        Position pos;
         uint i = 0;
-        for (auto it = begin; it != end; ++it)
-            if (!*it && i++ == r) return {Position::IntType(it - begin), colour};
-        return {};
+        board.get_minimal_state().for_each_empty_space([&rand, &pos, &i](auto p) {
+            if (i++ == rand) pos = p;
+        });
+        return {pos, colour};
     }
 
     OrderMove suggest_order_move() override {

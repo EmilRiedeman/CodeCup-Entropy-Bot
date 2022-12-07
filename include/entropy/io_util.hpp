@@ -33,22 +33,21 @@ inline void show_board(const MinimalBoardState &b, std::ostream &out = std::cerr
     out << ' ';
     for (char c = 'a'; c < char('a' + BOARD_SIZE); ++c) out << ' ' << c;
     out << '\n';
-    auto it = b.cells_begin();
     for (uint row = 0; row < BOARD_SIZE; ++row) {
         out << char('A' + row);
         for (uint column = 0; column < BOARD_SIZE; ++column) {
-            out << ' ' << char((*it) ? (*it) + '0' : '_');
-            ++it;
+            auto v = b.read_chip(row, column);
+            out << ' ' << char(v ? v + '0' : '_');
         }
-        out << " = " << b.get_horizontal_score(row);
+        out << " = " << lookup_score(b.get_horizontal_string(row));
         out << '\n';
     }
     out << ' ';
     for (uint column = 0; column < BOARD_SIZE; ++column) out << " =";
     out << "\n ";
-    for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << b.get_vertical_score(column) / 10;
+    for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << lookup_score(b.get_vertical_string(column)) / 10;
     out << "\n ";
-    for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << b.get_vertical_score(column) % 10;
+    for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << lookup_score(b.get_vertical_string(column)) % 10;
     out << "   " << b.get_total_score() << "\n\n";
 }
 
