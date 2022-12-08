@@ -46,7 +46,7 @@ inline void benchmark(const char *name, Function &&f) {
 
 template <std::size_t N = 1'000'000'000, typename Function>
 inline void benchmark_return_value(const char *name, Function &&f) {
-    benchmark(name, [&f]() {
+    benchmark<N>(name, [&f]() {
         [[maybe_unused]] volatile decltype(f()) v = std::forward<Function>(f)();
     });
 }
@@ -190,6 +190,14 @@ inline void benchmark_mcts_ponder() {
             tree_search_chaos(node, 1, ROLLOUTS);
         }
     }
+}
+
+inline void benchmark_rollout() {
+    BoardState board{};
+    ChipPool pool{};
+    benchmark_return_value<1'000'000>("Rollout", [=]() {
+        return mcts::smart_rollout_chaos(board, pool);
+    });
 }
 
 inline void benchmark_simulated_game() {

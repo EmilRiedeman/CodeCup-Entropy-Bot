@@ -6,10 +6,14 @@ FastRand RNG{};
 
 inline void do_smart_order_move(BoardState &board,
                                 OrderMove::Compact *moves_buf) {
-    uint n = 0;
-    board.get_minimal_state().for_each_possible_order_move([=](auto from, auto to) {
+    moves_buf[0].make_pass();
+    uint n = 1;
 
+    board.get_minimal_state().for_each_possible_order_move_with_score([&n, &moves_buf](auto from, auto to, int score) {
+        moves_buf[n++] = {from, to};
     });
+
+    board.move_chip(random_element(moves_buf, n, RNG)->create());
 }
 
 inline void do_smart_chaos_move(BoardState &board,
@@ -17,7 +21,14 @@ inline void do_smart_chaos_move(BoardState &board,
                                 uint8_t *moves_buf) {
     auto rand_it = random_element(chips.begin(), board.get_open_cells(), RNG);
     const Colour colour = *rand_it;
-    *rand_it = chips[board.get_open_cells()];
+    *rand_it = chips[board.get_open_cells() - 1];
+
+    uint n = 0;
+    board.get_minimal_state().for_each_empty_space_with_score([&n, &moves_buf](auto p, int score) {
+        moves_buf[n++] = p.p;
+    });
+
+    board.place_chip({*random_element(moves_buf, n, RNG), colour});
 }
 
 inline void smart_rollout_helper(BoardState &board,
@@ -43,6 +54,7 @@ uint smart_rollout_order(const BoardState &original, const ChipPool &pool) {
 }
 
 uint smart_rollout_chaos(const BoardState &original, const ChipPool &pool) {
+    if (!original.get_open_cells()) return original.get_total_score();
     auto chips = pool.create_array();
     BoardState copy = original;
 

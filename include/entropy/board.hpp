@@ -189,12 +189,30 @@ public:
     }
 
     template <typename Function>
+    void for_each_possible_order_move_with_score(Function &&f) const {
+        for_each_possible_order_move_with_score_helper<true>(std::forward<Function>(f));
+        for_each_possible_order_move_with_score_helper<false>(std::forward<Function>(f));
+    }
+
+    template <typename Function>
     void for_each_empty_space(Function &&f) const {
         Position p{0};
         for (uint row = 0; row < BOARD_SIZE; ++row) {
             auto str = horizontal[row];
             for (uint column = 0; column < BOARD_SIZE; ++column, ++p.p) {
                 if (!str.read_first()) std::forward<Function>(f)(p);
+                str.shift_right_once();
+            }
+        }
+    }
+
+    template <typename Function>
+    void for_each_empty_space_with_score(Function &&f) const {
+        Position p{0};
+        for (uint row = 0; row < BOARD_SIZE; ++row) {
+            auto str = horizontal[row];
+            for (uint column = 0; column < BOARD_SIZE; ++column, ++p.p) {
+                if (!str.read_first()) std::forward<Function>(f)(p, 0);
                 str.shift_right_once();
             }
         }
@@ -216,6 +234,28 @@ private:
                 } else {
                     if (!horizontal_from.is_none()) std::forward<Function>(f)(horizontal_from, pos);
                     if (!vertical_from[column].is_none()) std::forward<Function>(f)(vertical_from[column], pos);
+                }
+
+                pos.p += STEP;
+            }
+        }
+    }
+
+    template <bool LEFT_TO_RIGHT, typename Function>
+    void for_each_possible_order_move_with_score_helper(Function &&f) const {
+        constexpr int STEP = LEFT_TO_RIGHT ? 1 : -1;
+        constexpr uint START = LEFT_TO_RIGHT ? 0 : (BOARD_SIZE - 1);
+
+        std::array<Position, BOARD_SIZE> vertical_from{};
+        Position pos = LEFT_TO_RIGHT ? 0 : (BOARD_AREA - 1);
+        for (uint row = START; row < BOARD_SIZE; row += STEP) {
+            Position horizontal_from{};
+            for (uint column = START; column < BOARD_SIZE; column += STEP) {
+                if (read_chip(row, column)) {
+                    vertical_from[column].p = horizontal_from.p = pos.p;
+                } else {
+                    if (!horizontal_from.is_none()) std::forward<Function>(f)(horizontal_from, pos, 0);
+                    if (!vertical_from[column].is_none()) std::forward<Function>(f)(vertical_from[column], pos, 0);
                 }
 
                 pos.p += STEP;
