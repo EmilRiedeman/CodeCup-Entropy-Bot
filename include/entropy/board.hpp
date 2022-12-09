@@ -24,7 +24,8 @@ using BoardString = NumberString<BOARD_COLOURS>;
 constexpr inline auto PARTIAL_SCORE_LOOKUP_TABLE = generate_base_score_lookup_table<BOARD_COLOURS, BOARD_SIZE>();
 const auto COMPLETE_SCORE_LOOKUP_TABLE = generate_complete_score_lookup_table<BOARD_COLOURS, BOARD_SIZE, 0>(PARTIAL_SCORE_LOOKUP_TABLE);
 
-inline uint8_t lookup_score(BoardString s) {
+template <typename IntType = int>
+inline IntType lookup_score(BoardString s) {
     return COMPLETE_SCORE_LOOKUP_TABLE[0][s.hash];
 }
 
@@ -155,8 +156,8 @@ public:
     }
 
     void remove_chip(uint row, uint column) {
-        horizontal[row].set_empty(column);
-        vertical[column].set_empty(row);
+        horizontal[row].set_null(column);
+        vertical[column].set_null(row);
     }
 
     void move_chip(Position from, Position to) {
@@ -207,12 +208,19 @@ public:
     }
 
     template <typename Function>
-    void for_each_empty_space_with_score(Function &&f) const {
+    void for_each_possible_chaos_move_with_score(Colour c, Function &&f) const {
         Position p{0};
         for (uint row = 0; row < BOARD_SIZE; ++row) {
             auto str = horizontal[row];
+            uint h_old_score = lookup_score(str);
             for (uint column = 0; column < BOARD_SIZE; ++column, ++p.p) {
-                if (!str.read_first()) std::forward<Function>(f)(p, 0);
+                if (!str.read_first()) {
+                    auto v_str = vertical[column];
+                    uint v_old_score = lookup_score(v_str);
+                    v_str.set_at_empty(row, c);
+                    std::forward<Function>(f)(p, lookup_score(horizontal[row].set_at_empty_copy(column, c)) +
+                                                         lookup_score(v_str) - h_old_score - v_old_score);
+                }
                 str.shift_right_once();
             }
         }
@@ -246,16 +254,41 @@ private:
         constexpr int STEP = LEFT_TO_RIGHT ? 1 : -1;
         constexpr uint START = LEFT_TO_RIGHT ? 0 : (BOARD_SIZE - 1);
 
-        std::array<Position, BOARD_SIZE> vertical_from{};
+        std::array<Position, BOARD_SIZE> v_from{};
+        std::array<BoardString, BOARD_SIZE> v_moving_str;
+        std::array<int, BOARD_SIZE> h_remove_score;
+        std::array<Colour, BOARD_SIZE> v_last_colour;
+
         Position pos = LEFT_TO_RIGHT ? 0 : (BOARD_AREA - 1);
         for (uint row = START; row < BOARD_SIZE; row += STEP) {
             Position horizontal_from{};
+            auto h_moving_str = horizontal[row];
+            if (!h_moving_str.hash) continue;
+
+            int v_remove_score;
+            Colour h_last_colour;
+
             for (uint column = START; column < BOARD_SIZE; column += STEP) {
-                if (read_chip(row, column)) {
-                    vertical_from[column].p = horizontal_from.p = pos.p;
+                if (auto c = read_chip(row, column)) {
+                    h_last_colour = v_last_colour[column] = c;
+
+                    h_moving_str = horizontal[row].set_null_copy(column);
+                    v_moving_str[column] = vertical[column].set_null_copy(row);
+
+                    v_from[column].p = horizontal_from.p = pos.p;
+                    v_remove_score = lookup_score(vertical[column].set_null_copy(row)) - lookup_score(vertical[column]);
+                    h_remove_score[column] = lookup_score(horizontal[row].set_null_copy(column)) - lookup_score(horizontal[row]);
                 } else {
-                    if (!horizontal_from.is_none()) std::forward<Function>(f)(horizontal_from, pos, 0);
-                    if (!vertical_from[column].is_none()) std::forward<Function>(f)(vertical_from[column], pos, 0);
+                    if (!horizontal_from.is_none()) {
+                        std::forward<Function>(f)(horizontal_from, pos,
+                                                  v_remove_score +
+                                                          lookup_score(h_moving_str.set_at_empty_copy(column, h_last_colour)) +
+                                                          lookup_score(vertical[column].set_at_empty_copy(row, h_last_colour)) -
+                                                          get_score(row, column));
+                    }
+                    if (!v_from[column].is_none()) {
+                        std::forward<Function>(f)(v_from[column], pos, h_remove_score[column] + lookup_score(v_moving_str[column].set_at_empty_copy(row, v_last_colour[column])) + lookup_score(horizontal[row].set_at_empty_copy(column, v_last_colour[column])) - get_score(row, column));
+                    }
                 }
 
                 pos.p += STEP;

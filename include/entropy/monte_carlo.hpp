@@ -55,7 +55,7 @@ public:
 
     OrderMove select_move() const;
 
-    void rollout() { record_score(rollout_board(board)); }
+    void rollout() { record_score(smart_rollout_order(board, pool)); }
 
     [[nodiscard]] bool can_add_child() const { return unvisited; }
 
@@ -117,7 +117,7 @@ public:
 
     [[nodiscard]] ChaosMove select_move(Colour colour) const;
 
-    void rollout() { record_score(rollout_board(board)); }
+    void rollout() { record_score(smart_rollout_chaos(board, pool)); }
 
     [[nodiscard]] bool can_add_child(Colour colour) const { return !unvisited_moves[colour - 1].empty(); }
 
@@ -229,8 +229,8 @@ private:
     std::unique_ptr<OrderNode> order_node{};
     std::unique_ptr<ChaosNode> chaos_node{};
 
-    uint rollouts = 75'000;
-    float uct_temperature = 7;
+    uint rollouts = 15'000;
+    float uct_temperature = 4;
 };
 
 

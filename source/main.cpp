@@ -11,6 +11,7 @@ int main(int argc, const char *args[]) {
         start_console_game();
     } else if (argc >= 2) {
         if (!std::strcmp(args[1], "benchmark")) {
+            benchmark_simulated_game();
             benchmark_rollout();
         }
         if (!std::strcmp(args[1], "competition")) {

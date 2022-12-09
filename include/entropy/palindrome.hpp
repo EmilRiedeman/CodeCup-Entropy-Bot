@@ -26,7 +26,9 @@ public:
 
     constexpr void set_at_empty(uint i, uint c) { hash += POWER_TABLE[i] * c; }
 
-    constexpr void set_empty(uint i) { hash -= POWER_TABLE[i] * read(i); }
+    constexpr void set_null(uint i) { hash -= POWER_TABLE[i] * read(i); }
+
+    constexpr NumberString set_null_copy(uint i) const { return hash - POWER_TABLE[i] * read(i); }
 
     constexpr void shift_right(uint i) { hash /= POWER_TABLE[i]; }
 
@@ -63,7 +65,9 @@ public:
 
     constexpr void set_at_empty(uint i, uint c) { hash |= c << (i * BITS_PER_ELEMENT); }
 
-    constexpr void set_empty(uint i) { hash &= ~(BIT_MASK << (i * BITS_PER_ELEMENT)); }
+    constexpr void set_null(uint i) { hash &= ~(BIT_MASK << (i * BITS_PER_ELEMENT)); }
+
+    constexpr NumberString set_null_copy(uint i) const { return {hash & ~(BIT_MASK << (i * BITS_PER_ELEMENT))}; }
 
     constexpr void shift_right(uint i) { hash >>= i * BITS_PER_ELEMENT; }
 
