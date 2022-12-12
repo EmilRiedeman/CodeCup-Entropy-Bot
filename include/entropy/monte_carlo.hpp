@@ -173,7 +173,7 @@ private:
 
 class MoveMaker final : public entropy::MoveMaker {
 public:
-    explicit MoveMaker(float temp = 0.75) : uct_temperature(temp) {
+    explicit MoveMaker(float temp = 0.25) : uct_temperature(temp) {
         std::cerr << "MCTS Seed: " << RNG.seed << '\n';
     }
 

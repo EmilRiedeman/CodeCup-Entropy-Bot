@@ -15,13 +15,15 @@ int main(int argc, const char *args[]) {
             benchmark_rollout();
         }
         if (!std::strcmp(args[1], "competition")) {
-            constexpr uint N = 100;
+            constexpr uint N = 20;
 
-            for (auto b : {std::pair<float, float>{.5, .75}, std::pair<float, float>{.75, .5}}) {
+            for (auto b : {std::pair<float, float>{.75, .25}}) {
                 uint total_score = 0;
-                for (uint i = 0; i < N; ++i)
+                for (uint i = 0; i < N; ++i) {
+                    std::cerr << i << '\n';
                     total_score += simulate_game<>(mcts::MoveMaker(b.first), mcts::MoveMaker(b.second));
-                std::cerr << total_score / N << "\n\n\n\n\n\n";
+                }
+                std::cerr << total_score / N << " avg score\ndone!\n\n";
             }
         }
     }
