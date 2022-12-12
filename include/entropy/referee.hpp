@@ -36,6 +36,8 @@ inline uint simulate_game(CHAOS &&chaos, ORDER &&order) {
 
         if constexpr (PRINT) show_board(b.get_minimal_state());
     }
+
+    show_board(b.get_minimal_state());
     std::cerr << b.get_total_score() << '\n';
 
     return b.get_total_score();

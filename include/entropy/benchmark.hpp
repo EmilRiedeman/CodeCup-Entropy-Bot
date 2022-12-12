@@ -72,7 +72,7 @@ inline void benchmark_rng() {
     benchmark_return_value<N>("std::mt19937 generator", gen2);
 }
 
-template <std::size_t ROLLOUTS = 100'000, std::size_t N = 200>
+template <std::size_t ROLLOUTS = 2'000, std::size_t N = 200>
 inline void benchmark_mcts_ponder() {
     using namespace mcts;
     FastRand rand{0};

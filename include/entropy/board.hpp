@@ -263,7 +263,6 @@ private:
         for (uint row = START; row < BOARD_SIZE; row += STEP) {
             Position horizontal_from{};
             auto h_moving_str = horizontal[row];
-            if (!h_moving_str.hash) continue;
 
             int v_remove_score;
             Colour h_last_colour;
@@ -271,12 +270,12 @@ private:
             for (uint column = START; column < BOARD_SIZE; column += STEP) {
                 if (auto c = read_chip(row, column)) {
                     h_last_colour = v_last_colour[column] = c;
+                    v_from[column].p = horizontal_from.p = pos.p;
 
                     h_moving_str = horizontal[row].set_null_copy(column);
-                    v_moving_str[column] = vertical[column].set_null_copy(row);
-
-                    v_from[column].p = horizontal_from.p = pos.p;
                     v_remove_score = lookup_score(vertical[column].set_null_copy(row)) - lookup_score(vertical[column]);
+
+                    v_moving_str[column] = vertical[column].set_null_copy(row);
                     h_remove_score[column] = lookup_score(horizontal[row].set_null_copy(column)) - lookup_score(horizontal[row]);
                 } else {
                     if (!horizontal_from.is_none()) {
@@ -287,7 +286,11 @@ private:
                                                           get_score(row, column));
                     }
                     if (!v_from[column].is_none()) {
-                        std::forward<Function>(f)(v_from[column], pos, h_remove_score[column] + lookup_score(v_moving_str[column].set_at_empty_copy(row, v_last_colour[column])) + lookup_score(horizontal[row].set_at_empty_copy(column, v_last_colour[column])) - get_score(row, column));
+                        std::forward<Function>(f)(v_from[column], pos,
+                                                  h_remove_score[column] +
+                                                          lookup_score(v_moving_str[column].set_at_empty_copy(row, v_last_colour[column])) +
+                                                          lookup_score(horizontal[row].set_at_empty_copy(column, v_last_colour[column])) -
+                                                          get_score(row, column));
                     }
                 }
 

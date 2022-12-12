@@ -229,7 +229,7 @@ private:
     std::unique_ptr<OrderNode> order_node{};
     std::unique_ptr<ChaosNode> chaos_node{};
 
-    uint rollouts = 15'000;
+    uint rollouts = 5'000;
     float uct_temperature = 4;
 };
 
