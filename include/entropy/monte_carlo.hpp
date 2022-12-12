@@ -14,10 +14,6 @@ class MoveMaker;
 class OrderNode;
 class ChaosNode;
 
-inline uint rollout_board(const BoardState &b) {
-    return b.get_total_score();
-}
-
 uint smart_rollout_order(const BoardState &board, const ChipPool &pool);
 uint smart_rollout_chaos(const BoardState &board, const ChipPool &pool);
 
@@ -64,6 +60,8 @@ public:
     }
 
     [[nodiscard]] float avg_score() const { return -float(total_score) / 80 / float(total_visits); }
+
+    [[nodiscard]] float branch_score(const float logN, const float uct_temperature) const { return uct_score(avg_score(), logN, float(total_visits), uct_temperature); }
 
 private:
     void init();
@@ -127,6 +125,8 @@ public:
 
     [[nodiscard]] float avg_score() const { return float(total_score) / 80 / float(total_visits); }
 
+    [[nodiscard]] float branch_score(const float logN, const float uct_temperature) const { return uct_score(avg_score(), logN, float(total_visits), uct_temperature); }
+
     [[nodiscard]] bool is_terminal() const { return !board.get_open_cells(); }
 
     [[nodiscard]] Colour random_colour() const { return pool.random_chip(RNG); }
@@ -173,7 +173,7 @@ private:
 
 class MoveMaker final : public entropy::MoveMaker {
 public:
-    MoveMaker() {
+    explicit MoveMaker(float temp = 0.75) : uct_temperature(temp) {
         std::cerr << "MCTS Seed: " << RNG.seed << '\n';
     }
 
@@ -191,6 +191,15 @@ public:
         //std::cerr << order_node->total_visits << "\n";
 
         tree_search_order(*order_node, rollouts, uct_temperature);
+
+        float logN = std::log(float(order_node->total_visits));
+
+        for (const auto &c : order_node->children) {
+            //if (c->last_move.is_pass()) std::cerr << "Pass";
+            //else std::cerr << c->last_move.from << c->last_move.to;
+            //std::cerr << " : " << c->branch_score(logN, uct_temperature) << " " << c->total_visits << " " << c->avg_score() << '\n';
+        }
+
         return order_node->select_move();
     }
 
@@ -229,8 +238,8 @@ private:
     std::unique_ptr<OrderNode> order_node{};
     std::unique_ptr<ChaosNode> chaos_node{};
 
-    uint rollouts = 5'000;
-    float uct_temperature = 4;
+    uint rollouts = 7'500;
+    float uct_temperature;
 };
 
 

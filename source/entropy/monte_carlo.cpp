@@ -132,7 +132,7 @@ ChaosNode *OrderNode::add_random_child() {
 ChaosNode *OrderNode::select_child(const float uct_temperature) const {
     const auto logN = std::log(float(total_visits));
     return select_child_helper(children, [=](const auto &node) {
-        return uct_score(node.avg_score(), logN, float(node.total_visits), uct_temperature);
+        return node.branch_score(logN, uct_temperature);
     });
 }
 
@@ -205,7 +205,7 @@ OrderNode *ChaosNode::add_random_child(Colour colour) {
 OrderNode *ChaosNode::select_child(Colour colour, const float uct_temperature) const {
     const auto logN = std::log(float(visits[colour - 1]));
     return select_child_helper(children[colour - 1], [=](const auto &node) {
-        return uct_score(node.avg_score(), logN, float(node.total_visits), uct_temperature);
+        return node.branch_score(logN, uct_temperature);
     });
 }
 
