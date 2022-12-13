@@ -20,11 +20,10 @@ struct FastRand {
     [[nodiscard]] constexpr static result_type max() { return std::numeric_limits<int16_t>::max(); }
 };
 
-template <typename RandomAccessIterator, typename Generator>
-RandomAccessIterator random_element(RandomAccessIterator begin, typename std::remove_reference_t<Generator>::result_type n, Generator &&gen) {
-    return begin +
-           std::uniform_int_distribution<typename std::remove_reference_t<Generator>::result_type>{
-                   0, n - 1}(std::forward<Generator>(gen));
+template <typename InputIterator, typename Generator>
+InputIterator random_element(InputIterator begin, typename std::remove_reference_t<Generator>::result_type n, Generator &&gen) {
+    return std::advance(begin, std::uniform_int_distribution<typename std::remove_reference_t<Generator>::result_type>{
+                                       0, n - 1}(std::forward<Generator>(gen)));
 }
 
 template <uint N>
