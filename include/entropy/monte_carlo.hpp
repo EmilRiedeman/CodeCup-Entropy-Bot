@@ -14,6 +14,16 @@ class MoveMaker;
 class OrderNode;
 class ChaosNode;
 
+constexpr inline std::size_t PREALLOCATED_NODE_AMOUNT = 32768;
+
+using OrderNodeBuffer = PreallocatedBuffer<OrderNode, PREALLOCATED_NODE_AMOUNT>;
+using ChaosNodeBuffer = PreallocatedBuffer<ChaosNode, PREALLOCATED_NODE_AMOUNT>;
+
+using OrderNodePtr = std::unique_ptr<OrderNode, typename OrderNodeBuffer::Deleter>;
+
+extern OrderNodeBuffer preallocated_order_node_buffer;
+extern ChaosNodeBuffer preallocated_chaos_node_buffer;
+
 uint smart_rollout_order(const BoardState &board, const ChipPool &pool);
 uint smart_rollout_chaos(const BoardState &board, const ChipPool &pool);
 

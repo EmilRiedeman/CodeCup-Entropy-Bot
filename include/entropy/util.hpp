@@ -80,6 +80,8 @@ constexpr std::array<T, N> create_array(const T &value) {
 
 template <typename T, std::size_t N>
 class PreallocatedBuffer {
+    using Storage = typename std::aligned_storage_t<sizeof(T), alignof(T)>;
+
 public:
     typedef T value_type;
     typedef value_type *pointer;
@@ -94,17 +96,17 @@ public:
 
     [[nodiscard]] pointer allocate() {
         if (gap_amount) {
-            pointer result = gaps[0];
+            Storage *result = gaps[0];
             gaps[0] = gaps[--gap_amount];
-            return result;
+            return reinterpret_cast<pointer>(result);
         } else {
-            return next++;
+            return reinterpret_cast<pointer>(next++);
         }
     }
 
     void deallocate(pointer ptr) {
         ptr->~value_type();
-        gaps[gap_amount++] = ptr;
+        gaps[gap_amount++] = reinterpret_cast<Storage *>(ptr);
     }
 
     Deleter get_deleter() { return {*this}; }
@@ -115,8 +117,8 @@ public:
     }
 
     template <typename... Args>
-    std::unique_ptr<T> make_unique(Args &&...args) {
-        return std::unique_ptr<T>(construct(std::forward<Args>(args)...), get_deleter());
+    std::unique_ptr<T, Deleter> make_unique(Args &&...args) {
+        return {construct(std::forward<Args>(args)...), get_deleter()};
     }
 
     template <typename... Args>
@@ -125,10 +127,10 @@ public:
     }
 
 private:
-    value_type buffer[max_capacity];
-    pointer gaps[max_capacity];
+    Storage buffer[max_capacity];
+    Storage *gaps[max_capacity];
 
-    pointer next = buffer;
+    Storage *next = buffer;
     std::size_t gap_amount = 0;
 };
 

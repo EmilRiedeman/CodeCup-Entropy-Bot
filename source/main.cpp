@@ -7,6 +7,19 @@
 int main(int argc, const char *args[]) {
     using namespace entropy;
 
+    PreallocatedBuffer<int, 128> buffer;
+
+    {
+        auto ptr = buffer.make_shared(5);
+        std::cerr << ptr.get() << '\n';
+
+        auto ptr2 = buffer.make_unique(15);
+        std::cerr << ptr2.get() << '\n';
+    }
+
+    std::cerr << buffer.allocate() << '\n';
+    std::cerr << buffer.allocate() << '\n';
+
     if (argc == 1) {
         start_console_game();
     } else if (argc >= 2) {

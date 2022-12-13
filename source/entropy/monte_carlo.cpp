@@ -3,6 +3,8 @@
 namespace entropy::mcts {
 
 FastRand RNG{};
+OrderNodeBuffer order_node_buffer{};
+ChaosNodeBuffer chaos_node_buffer{};
 
 inline void do_smart_order_move(BoardState &board,
                                 OrderMove::Compact *moves_buf) {
