@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <memory>
 #include <random>
@@ -94,26 +95,35 @@ public:
         void operator()(pointer ptr) { buffer.deallocate(ptr); }
     };
 
+    ~PreallocatedBuffer() {
+        std::sort(gaps, gaps + gap_amount);
+        std::size_t gap_index = 0;
+        for (auto it = buffer; it != next; ++it) {
+            if (gap_index < gap_amount && it == gaps[gap_index]) ++gap_index;
+            else std::destroy_at(std::launder(reinterpret_cast<pointer>(it)));
+        }
+    }
+
     [[nodiscard]] pointer allocate() {
         if (gap_amount) {
             Storage *result = gaps[0];
             gaps[0] = gaps[--gap_amount];
-            return reinterpret_cast<pointer>(result);
+            return std::launder(reinterpret_cast<pointer>(result));
         } else {
-            return reinterpret_cast<pointer>(next++);
+            return std::launder(reinterpret_cast<pointer>(next++));
         }
     }
 
     void deallocate(pointer ptr) {
-        ptr->~value_type();
-        gaps[gap_amount++] = reinterpret_cast<Storage *>(ptr);
+        std::destroy_at(ptr);
+        gaps[gap_amount++] = std::launder(reinterpret_cast<Storage *>(ptr));
     }
 
     Deleter get_deleter() { return {*this}; }
 
     template <typename... Args>
     [[nodiscard]] pointer construct(Args &&...args) {
-        return new (allocate()) T(std::forward<Args>(args)...);
+        return ::new (allocate()) T(std::forward<Args>(args)...);
     }
 
     template <typename... Args>
