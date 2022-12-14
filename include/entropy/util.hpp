@@ -79,6 +79,7 @@ constexpr std::array<T, N> create_array(const T &value) {
     return create_array(value, std::make_index_sequence<N>());
 }
 
+// Only use in global context, destructor may cause memory leaks
 template <typename T, std::size_t N>
 class PreallocatedBuffer {
     using Storage = typename std::aligned_storage_t<sizeof(T), alignof(T)>;
@@ -106,9 +107,7 @@ public:
 
     [[nodiscard]] pointer allocate() {
         if (gap_amount) {
-            Storage *result = gaps[0];
-            gaps[0] = gaps[--gap_amount];
-            return std::launder(reinterpret_cast<pointer>(result));
+            return std::launder(reinterpret_cast<pointer>(gaps[--gap_amount]));
         } else {
             return std::launder(reinterpret_cast<pointer>(next++));
         }
