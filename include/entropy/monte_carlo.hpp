@@ -19,8 +19,8 @@ constexpr inline std::size_t PREALLOCATED_NODE_AMOUNT = 32768;
 using OrderNodeBuffer = PreallocatedBuffer<OrderNode, PREALLOCATED_NODE_AMOUNT>;
 using ChaosNodeBuffer = PreallocatedBuffer<ChaosNode, PREALLOCATED_NODE_AMOUNT>;
 
-extern OrderNodeBuffer preallocated_order_node_buffer;
-extern ChaosNodeBuffer preallocated_chaos_node_buffer;
+extern OrderNodeBuffer order_node_buffer;
+extern ChaosNodeBuffer chaos_node_buffer;
 
 uint smart_rollout_order(const BoardState &board, const ChipPool &pool);
 uint smart_rollout_chaos(const BoardState &board, const ChipPool &pool);
@@ -46,7 +46,7 @@ public:
 
     void set_as_root() { parent = nullptr; }
 
-    std::unique_ptr<ChaosNode> *get_child(const OrderMove &move) {
+    std::shared_ptr<ChaosNode> *get_child(const OrderMove &move) {
         auto it = std::find_if(children.begin(), children.end(),
                                [=](const auto &x) { return move == x->last_move; });
         if (it == children.end()) return nullptr;
@@ -79,7 +79,7 @@ private:
     BoardState board;
     const ChipPool pool;
     ChaosNode *parent{};
-    std::vector<std::unique_ptr<ChaosNode>> children;
+    std::vector<std::shared_ptr<ChaosNode>> children;
 
     const ChaosMove last_move{};
 
@@ -109,7 +109,7 @@ public:
 
     void set_as_root() { parent = nullptr; }
 
-    std::unique_ptr<OrderNode> *get_child(const ChaosMove &move) {
+    std::shared_ptr<OrderNode> *get_child(const ChaosMove &move) {
         auto &vec = children[move.colour - 1];
         auto it = std::find_if(vec.begin(), vec.end(),
                                [=](const auto &x) { return move.pos.p == x->last_move.pos.p; });
@@ -162,7 +162,7 @@ private:
     BoardState board;
     const ChipPool pool;
     OrderNode *parent{};
-    std::array<std::vector<std::unique_ptr<OrderNode>>, ChipPool::N> children{};
+    std::array<std::vector<std::shared_ptr<OrderNode>>, ChipPool::N> children{};
 
     const OrderMove last_move{};
 
@@ -186,7 +186,7 @@ public:
     }
 
     ChaosMove suggest_chaos_move(Colour colour) override {
-        if (!chaos_node) chaos_node = std::make_unique<ChaosNode>(board, chip_pool);
+        if (!chaos_node) chaos_node = chaos_node_buffer.make_shared(board, chip_pool);
         else chaos_node->clear_colours(uint(colour));
         //std::cerr << chaos_node->total_visits << "\n";
 
@@ -195,7 +195,7 @@ public:
     }
 
     OrderMove suggest_order_move() override {
-        if (!order_node) order_node = std::make_unique<OrderNode>(board, chip_pool);
+        if (!order_node) order_node = order_node_buffer.make_shared(board, chip_pool);
         //std::cerr << order_node->total_visits << "\n";
 
         tree_search_order(*order_node, rollouts, uct_temperature);
@@ -243,8 +243,8 @@ public:
 private:
     BoardState board;
     ChipPool chip_pool;
-    std::unique_ptr<OrderNode> order_node{};
-    std::unique_ptr<ChaosNode> chaos_node{};
+    std::shared_ptr<OrderNode> order_node{};
+    std::shared_ptr<ChaosNode> chaos_node{};
 
     uint rollouts = 7'500;
     float uct_temperature;

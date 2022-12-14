@@ -72,7 +72,36 @@ inline void benchmark_rng() {
     benchmark_return_value<N>("std::mt19937 generator", gen2);
 }
 
-template <std::size_t ROLLOUTS = 2'000, std::size_t N = 200>
+/*
+ * N=200
+ *
+ * 2000 rollouts:
+ * using new:
+ * 12681ms
+ * 15670ms
+ * 13000ms
+ * 13839ms
+ *
+ * using preallocated:
+ * 12688ms
+ * 12809ms
+ * 12800ms
+ * 12742ms
+ *
+ * 5000 rollouts
+ * using new:
+ * 33266ms
+ * 31991ms
+ * 31659ms
+ *
+ * using preallocated:
+ * 31336ms
+ * 31845ms
+ * 31543ms
+ *
+ */
+
+template <std::size_t ROLLOUTS = 5'000, std::size_t N = 200>
 inline void benchmark_mcts_ponder() {
     using namespace mcts;
     FastRand rand{0};
@@ -110,11 +139,11 @@ inline void benchmark_simulated_game() {
     using namespace mcts;
     {
         Timer t("MCTS (chaos) vs Random (order)");
-        simulate_game(mcts::MoveMaker(), RandomMoveMaker());
+        for (uint i = 0; i < 20; ++i) simulate_game(mcts::MoveMaker(), RandomMoveMaker());
     }
     {
         Timer t("Random (chaos) vs MCTS (order)");
-        simulate_game(RandomMoveMaker(), mcts::MoveMaker());
+        for (uint i = 0; i < 20; ++i) simulate_game(RandomMoveMaker(), mcts::MoveMaker());
     }
 }
 

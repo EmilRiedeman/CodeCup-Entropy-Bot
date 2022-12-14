@@ -89,7 +89,7 @@ uint smart_rollout_chaos(const BoardState &original, const ChipPool &pool) {
 }
 
 template <typename T, typename F>
-inline T *select_child_helper(const std::vector<std::unique_ptr<T>> &vec, F &&evaluator) {
+inline T *select_child_helper(const std::vector<std::shared_ptr<T>> &vec, F &&evaluator) {
     auto best_score = std::forward<F>(evaluator)(*vec.front());
     auto child = vec.begin();
 
@@ -127,7 +127,7 @@ ChaosNode *OrderNode::add_random_child() {
     auto move = *it;
     *it = moves[--unvisited];
 
-    children.push_back(std::make_unique<ChaosNode>(this, move.create()));
+    children.push_back(chaos_node_buffer.make_shared(this, move.create()));
     return children.back().get();
 }
 
@@ -198,9 +198,7 @@ OrderNode *ChaosNode::add_random_child(Colour colour) {
     unvisited_moves[index].pop_back();
     if (unvisited_moves[index].empty()) unvisited_moves[index] = {};
 
-    children[index].push_back(std::make_unique<OrderNode>(
-            this,
-            ChaosMove{p, colour}));
+    children[index].push_back(order_node_buffer.make_shared(this, ChaosMove{p, colour}));
     return children[index].back().get();
 }
 
