@@ -14,11 +14,20 @@ inline void do_smart_order_move(BoardState &board,
     //show_board(board.get_minimal_state());
     board.get_minimal_state().for_each_possible_order_move_with_score([&n, &moves_buf, &best_score](auto from, auto to, int score) {
         //std::cerr << from << to << ": " << score << '\n';
+        /*
         if (score == best_score) moves_buf[n++] = {from, to};
         else if (score > best_score) {
             moves_buf[0] = {from, to};
             best_score = score;
             n = 1;
+        }
+         */
+        if (score >= 0 && score >= best_score) {
+            if (score >= best_score + 5) {
+                best_score = score;
+                n = 0;
+            }
+            moves_buf[n++] = {from, to};
         }
     });
 
@@ -138,11 +147,10 @@ ChaosNode *OrderNode::select_child(const float uct_temperature) const {
     });
 }
 
-OrderMove OrderNode::select_move() const {
+ChaosNode *OrderNode::select_best_node() const {
     return select_child_helper(children, [](const auto &node) {
-               return node.avg_score();
-           })
-            ->last_move;
+        return node.average_score();
+    });
 }
 
 void OrderNode::record_score(uint score) {
@@ -209,11 +217,10 @@ OrderNode *ChaosNode::select_child(Colour colour, const float uct_temperature) c
     });
 }
 
-ChaosMove ChaosNode::select_move(Colour colour) const {
+OrderNode *ChaosNode::select_best_node(Colour colour) const {
     return select_child_helper(children[colour - 1], [](const auto &node) {
-               return node.avg_score();
-           })
-            ->last_move;
+        return node.average_score();
+    });
 }
 
 void ChaosNode::record_score(uint score) {

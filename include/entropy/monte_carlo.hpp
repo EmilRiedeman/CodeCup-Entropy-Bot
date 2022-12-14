@@ -25,8 +25,10 @@ extern ChaosNodeBuffer chaos_node_buffer;
 uint smart_rollout_order(const BoardState &board, const ChipPool &pool);
 uint smart_rollout_chaos(const BoardState &board, const ChipPool &pool);
 
+constexpr inline float UCT_SCORE_MULTIPLIER = 1. / 80;
+
 inline float uct_score(float s, float logN, float n, float temperature) {
-    return s + temperature * std::sqrt(logN / n);
+    return s * UCT_SCORE_MULTIPLIER + temperature * std::sqrt(logN / n);
 }
 
 void tree_search_order(OrderNode &root, uint rollouts, float uct_temperature = 5);
@@ -57,7 +59,7 @@ public:
 
     ChaosNode *select_child(float uct_temperature) const;
 
-    OrderMove select_move() const;
+    ChaosNode *select_best_node() const;
 
     void rollout() { record_score(smart_rollout_order(board, pool)); }
 
@@ -67,9 +69,9 @@ public:
         if (!initialized) init();
     }
 
-    [[nodiscard]] float avg_score() const { return -float(total_score) / 80 / float(total_visits); }
+    [[nodiscard]] float average_score() const { return -float(total_score) / float(total_visits); }
 
-    [[nodiscard]] float branch_score(const float logN, const float uct_temperature) const { return uct_score(avg_score(), logN, float(total_visits), uct_temperature); }
+    [[nodiscard]] float branch_score(const float logN, const float uct_temperature) const { return uct_score(average_score(), logN, float(total_visits), uct_temperature); }
 
 private:
     void init();
@@ -121,7 +123,7 @@ public:
 
     [[nodiscard]] OrderNode *select_child(Colour colour, float uct_temperature) const;
 
-    [[nodiscard]] ChaosMove select_move(Colour colour) const;
+    [[nodiscard]] OrderNode *select_best_node(Colour colour) const;
 
     void rollout() { record_score(smart_rollout_chaos(board, pool)); }
 
@@ -131,9 +133,9 @@ public:
         if (!initialized) init();
     }
 
-    [[nodiscard]] float avg_score() const { return float(total_score) / 80 / float(total_visits); }
+    [[nodiscard]] float average_score() const { return float(total_score) / float(total_visits); }
 
-    [[nodiscard]] float branch_score(const float logN, const float uct_temperature) const { return uct_score(avg_score(), logN, float(total_visits), uct_temperature); }
+    [[nodiscard]] float branch_score(const float logN, const float uct_temperature) const { return uct_score(average_score(), logN, float(total_visits), uct_temperature); }
 
     [[nodiscard]] bool is_terminal() const { return !board.get_open_cells(); }
 
@@ -181,7 +183,7 @@ private:
 
 class MoveMaker final : public entropy::MoveMaker {
 public:
-    explicit MoveMaker(float temp = 0.25) : uct_temperature(temp) {
+    explicit MoveMaker(float temp = 0.45) : uct_temperature(temp) {
         std::cerr << "MCTS Seed: " << RNG.seed << '\n';
     }
 
@@ -191,24 +193,34 @@ public:
         //std::cerr << chaos_node->total_visits << "\n";
 
         tree_search_chaos(*chaos_node, colour, rollouts, uct_temperature);
-        return chaos_node->select_move(colour);
+        return chaos_node->select_best_node(colour)->last_move;
     }
 
     OrderMove suggest_order_move() override {
         if (!order_node) order_node = order_node_buffer.make_shared(board, chip_pool);
-        //std::cerr << order_node->total_visits << "\n";
+
+        //std::cerr << "total visits: " << order_node->total_visits << '\n';
 
         tree_search_order(*order_node, rollouts, uct_temperature);
 
+        /*
         float logN = std::log(float(order_node->total_visits));
 
         for (const auto &c : order_node->children) {
-            //if (c->last_move.is_pass()) std::cerr << "Pass";
-            //else std::cerr << c->last_move.from << c->last_move.to;
-            //std::cerr << " : " << c->branch_score(logN, uct_temperature) << " " << c->total_visits << " " << c->avg_score() << '\n';
+            if (c->last_move.is_pass()) std::cerr << "PASS";
+            else std::cerr << c->last_move.from << c->last_move.to;
+            std::cerr << " : " << c->branch_score(logN, uct_temperature) << " " << c->total_visits << " " << c->average_score() << '\n';
         }
+        */
 
-        return order_node->select_move();
+        auto node = order_node->select_best_node();
+
+        if (node->last_move.is_pass()) std::cerr << "PASS";
+        else std::cerr << node->last_move.from << node->last_move.to;
+
+        std::cerr << " : visits = " << node->total_visits << "; expected score = " << node->average_score() << '\n';
+
+        return node->last_move;
     }
 
     void register_chaos_move(const ChaosMove &move) override {
@@ -246,7 +258,7 @@ private:
     std::shared_ptr<OrderNode> order_node{};
     std::shared_ptr<ChaosNode> chaos_node{};
 
-    uint rollouts = 7'500;
+    uint rollouts = 7500;
     float uct_temperature;
 };
 
