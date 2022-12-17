@@ -6,24 +6,15 @@ FastRand RNG{};
 OrderNodeBuffer order_node_buffer{};
 ChaosNodeBuffer chaos_node_buffer{};
 
-inline void do_smart_order_move(BoardState &board,
-                                OrderMove::Compact *moves_buf) {
+inline void do_smart_order_move(BoardState &board) {
+    OrderMove::Compact moves_buf[MAX_POSSIBLE_ORDER_MOVES];
+
     moves_buf[0].make_pass();
     uint n = 1;
     int best_score = 0;
-    //show_board(board.get_minimal_state());
     board.get_minimal_state().for_each_possible_order_move_with_score([&n, &moves_buf, &best_score](auto from, auto to, int score) {
-        //std::cerr << from << to << ": " << score << '\n';
-        /*
-        if (score == best_score) moves_buf[n++] = {from, to};
-        else if (score > best_score) {
-            moves_buf[0] = {from, to};
-            best_score = score;
-            n = 1;
-        }
-         */
-        if (score >= 0 && score >= best_score) {
-            if (score >= best_score + 5) {
+        if (score >= best_score) {
+            if (score > best_score) {
                 best_score = score;
                 n = 0;
             }
@@ -32,22 +23,19 @@ inline void do_smart_order_move(BoardState &board,
     });
 
     board.move_chip(random_element(moves_buf, n, RNG)->create());
-
-    //show_board(board.get_minimal_state());
 }
 
 inline void do_smart_chaos_move(BoardState &board,
-                                std::array<uint8_t, BOARD_AREA> &chips,
-                                uint8_t *moves_buf) {
+                                std::array<uint8_t, BOARD_AREA> &chips) {
+    uint8_t moves_buf[BOARD_AREA];
+
     auto rand_it = random_element(chips.begin(), board.get_open_cells(), RNG);
     const Colour colour = *rand_it;
     *rand_it = chips[board.get_open_cells() - 1];
 
     uint n = 0;
     uint best_score = -1u;
-    //show_board(board.get_minimal_state());
     board.get_minimal_state().for_each_possible_chaos_move_with_score(colour, [&n, &moves_buf, &best_score](auto p, uint score) {
-        //std::cerr << p << ": " << score << '\n';
         if (score == best_score) moves_buf[n++] = p.p;
         else if (score < best_score) {
             moves_buf[0] = p.p;
@@ -57,17 +45,13 @@ inline void do_smart_chaos_move(BoardState &board,
     });
 
     board.place_chip({*random_element(moves_buf, n, RNG), colour});
-
-    //show_board(board.get_minimal_state());
 }
 
 inline void smart_rollout_helper(BoardState &board,
-                                 std::array<uint8_t, BOARD_AREA> &chips,
-                                 OrderMove::Compact *o_moves_buf,
-                                 uint8_t *c_moves_buf) {
+                                 std::array<uint8_t, BOARD_AREA> &chips) {
     while (board.get_open_cells()) {
-        do_smart_order_move(board, o_moves_buf);
-        do_smart_chaos_move(board, chips, c_moves_buf);
+        do_smart_order_move(board);
+        do_smart_chaos_move(board, chips);
     }
 }
 
@@ -75,10 +59,7 @@ uint smart_rollout_order(const BoardState &original, const ChipPool &pool) {
     auto chips = pool.create_array();
     BoardState copy = original;
 
-    OrderMove::Compact o_moves_buf[MAX_POSSIBLE_ORDER_MOVES];
-    uint8_t c_moves_buf[BOARD_AREA];
-
-    smart_rollout_helper(copy, chips, o_moves_buf, c_moves_buf);
+    smart_rollout_helper(copy, chips);
 
     return copy.get_total_score();
 }
@@ -88,11 +69,8 @@ uint smart_rollout_chaos(const BoardState &original, const ChipPool &pool) {
     auto chips = pool.create_array();
     BoardState copy = original;
 
-    OrderMove::Compact o_moves_buf[MAX_POSSIBLE_ORDER_MOVES];
-    uint8_t c_moves_buf[BOARD_AREA];
-
-    do_smart_chaos_move(copy, chips, c_moves_buf);
-    smart_rollout_helper(copy, chips, o_moves_buf, c_moves_buf);
+    do_smart_chaos_move(copy, chips);
+    smart_rollout_helper(copy, chips);
 
     return copy.get_total_score();
 }
