@@ -2,6 +2,7 @@
 
 #include "board.hpp"
 #include "io_util.hpp"
+#include "random.hpp"
 
 namespace entropy {
 
