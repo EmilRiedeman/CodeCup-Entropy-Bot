@@ -7,28 +7,6 @@
 
 namespace entropy {
 
-struct FastRand {
-    typedef uint result_type;
-
-    result_type seed = std::random_device()();
-
-    constexpr result_type operator()() {
-        seed = (214013 * seed + 2531011);
-        return seed >> 17;
-    }
-
-    [[nodiscard]] constexpr static result_type min() { return 0; }
-
-    [[nodiscard]] constexpr static result_type max() { return std::numeric_limits<int16_t>::max(); }
-};
-
-template <typename InputIterator, typename Generator>
-InputIterator random_element(InputIterator begin, typename std::remove_reference_t<Generator>::result_type n, Generator &&gen) {
-    std::advance(begin, std::uniform_int_distribution<typename std::remove_reference_t<Generator>::result_type>{
-                                0, n - 1}(std::forward<Generator>(gen)));
-    return begin;
-}
-
 template <uint N>
 constexpr uint int_pow(uint p) {
     if (p == 1) return N;
