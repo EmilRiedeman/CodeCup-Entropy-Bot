@@ -135,11 +135,13 @@ struct OrderMove {
             if (m.is_pass()) from = PASS_VALUE;
         }
 
+        bool is_pass() const { return from == PASS_VALUE; }
+
         void make_pass() { from = PASS_VALUE; }
 
         [[nodiscard]] OrderMove create() const {
-            return (from == PASS_VALUE) ? OrderMove{}
-                                        : OrderMove{from, to};
+            return is_pass() ? OrderMove{}
+                             : OrderMove{from, to};
         }
     };
 };
