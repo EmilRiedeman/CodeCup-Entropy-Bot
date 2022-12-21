@@ -2,6 +2,7 @@
 
 #include "data_types.hpp"
 #include "palindrome.hpp"
+#include "zobrist_hash.hpp"
 
 #include <algorithm>
 #include <array>
@@ -20,6 +21,7 @@ static_assert(BOARD_CHIPS * (BOARD_COLOURS - 1) == BOARD_AREA);
 
 using Colour = uint8_t;
 using BoardString = NumberString<BOARD_COLOURS>;
+using BoardHash = ZobristHash<BOARD_COLOURS, BOARD_AREA>;
 
 constexpr inline auto PARTIAL_SCORE_LOOKUP_TABLE = generate_base_score_lookup_table<BOARD_COLOURS, BOARD_SIZE>();
 const auto COMPLETE_SCORE_LOOKUP_TABLE = generate_complete_score_lookup_table<BOARD_COLOURS, BOARD_SIZE, 0>(PARTIAL_SCORE_LOOKUP_TABLE);
@@ -311,7 +313,9 @@ public:
 
     [[nodiscard]] const MinimalBoardState &get_minimal_state() const { return minimal_state; }
 
-    [[nodiscard]] uint get_open_cells() const { return open_cells; }
+    [[nodiscard]] uint get_open_cells() const { return hash.get_open_spaces(); }
+
+    [[nodiscard]] BoardHash get_hash() const { return hash; }
 
     [[nodiscard]] uint get_total_score() const { return total_score; }
 
@@ -325,7 +329,8 @@ public:
 
         total_score += minimal_state.get_score(row, column) - old_score;
 
-        --open_cells;
+        hash.change_state(move.colour - 1, move.pos.index());
+        hash.decrement();
     }
 
     void move_chip(const OrderMove &move) {
@@ -343,26 +348,21 @@ public:
         const auto old_score = minimal_state.get_score(f_row, f_column) +
                                lookup_score(VERTICAL ? minimal_state.get_horizontal_string(to.row()) : minimal_state.get_vertical_string(to.column()));
 
+        auto t = minimal_state.read_chip(f_row, f_column) - 1;
+        hash.change_state(t, from.index());
+
         minimal_state.move_chip(from, to);
+
+        hash.change_state(t, to.index());
 
         total_score += minimal_state.get_score(f_row, f_column) +
                        lookup_score(VERTICAL ? minimal_state.get_horizontal_string(to.row()) : minimal_state.get_vertical_string(to.column())) - old_score;
     }
 
-    template <typename Function>
-    void for_each_possible_order_move_score_differance(Function &&f) const {
-        constexpr int UNINITIALIZED_VALUE = std::numeric_limits<int>::max();
-        auto scores = create_array<BOARD_AREA>(UNINITIALIZED_VALUE);
-
-        minimal_state.for_each_possible_order_move([&scores](auto from, auto to) {
-            if (scores[from.p] == UNINITIALIZED_VALUE) scores[from.p] = 0;
-        });
-    }
-
 private:
-    MinimalBoardState minimal_state;
+    MinimalBoardState minimal_state{};
 
-    uint open_cells = BOARD_AREA;
+    BoardHash hash{};
     uint total_score = 0;
 };
 
