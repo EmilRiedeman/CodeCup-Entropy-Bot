@@ -225,7 +225,7 @@ void ChaosNode::record_score(uint score) {
     if (parent) parent->record_score(score);
 }
 
-inline void tree_search_helper(OrderNode *o_node, const float uct_temperature) {
+inline void SearchEnvironment::tree_search_helper(OrderNode *o_node) {
     while (true) {
         o_node->try_init();
         if (o_node->can_add_child()) {
@@ -248,18 +248,18 @@ inline void tree_search_helper(OrderNode *o_node, const float uct_temperature) {
     }
 }
 
-void tree_search_order(OrderNode &root, uint rollouts, const float uct_temperature) {
+void SearchEnvironment::tree_search_order(OrderNode &root) {
     root.try_init();
     root.set_as_root();
 
     while (root.can_add_child()) root.add_random_child()->rollout();
 
     for (uint i = 0; i < rollouts; ++i) {
-        tree_search_helper(&root, uct_temperature);
+        tree_search_helper(&root);
     }
 }
 
-void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts, const float uct_temperature) {
+void SearchEnvironment::tree_search_chaos(ChaosNode &root, Colour c) {
     if (root.is_terminal()) return;
     root.try_init();
     root.set_as_root();
@@ -267,7 +267,7 @@ void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts, const float uct
     while (root.can_add_child(c)) root.add_random_child(c)->rollout();
 
     for (uint i = 0; i < rollouts; ++i) {
-        tree_search_helper(root.select_child(c, uct_temperature), uct_temperature);
+        tree_search_helper(root.select_child(c, uct_temperature));
     }
 }
 

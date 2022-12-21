@@ -119,10 +119,11 @@ inline void benchmark_mcts_ponder() {
     {
         mcts::RNG.seed = 0;
 
+        SearchEnvironment env{.45, ROLLOUTS};
         Timer t("Monte Carlo tree search ponder");
         for (uint i = 0; i < N; ++i) {
             ChaosNode node(b, pool);
-            tree_search_chaos(node, 1, ROLLOUTS);
+            env.tree_search_chaos(node, 1);
         }
     }
 }

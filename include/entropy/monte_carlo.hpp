@@ -31,8 +31,17 @@ inline float uct_score(float s, float logN, float n, float temperature) {
     return s * UCT_SCORE_MULTIPLIER + temperature * std::sqrt(logN / n);
 }
 
-void tree_search_order(OrderNode &root, uint rollouts, float uct_temperature = 5);
-void tree_search_chaos(ChaosNode &root, Colour c, uint rollouts, float uct_temperature = 5);
+struct SearchEnvironment {
+    float uct_temperature = 0.45;
+    uint rollouts = 7'500;
+
+    void tree_search_order(OrderNode &root);
+
+    void tree_search_chaos(ChaosNode &root, Colour c);
+
+private:
+    void tree_search_helper(OrderNode *o_node);
+};
 
 class OrderNode {
 public:
@@ -183,7 +192,7 @@ private:
 
 class MoveMaker final : public entropy::MoveMaker {
 public:
-    explicit MoveMaker(float temp = 0.45) : uct_temperature(temp) {
+    explicit MoveMaker(SearchEnvironment environment = {}) : search_environment(environment) {
         std::cerr << "MCTS Seed: " << RNG.seed << '\n';
     }
 
@@ -192,7 +201,7 @@ public:
         else chaos_node->clear_colours(uint(colour));
         //std::cerr << chaos_node->total_visits << "\n";
 
-        tree_search_chaos(*chaos_node, colour, rollouts, uct_temperature);
+        search_environment.tree_search_chaos(*chaos_node, colour);
         return chaos_node->select_best_node(colour)->last_move;
     }
 
@@ -201,7 +210,7 @@ public:
 
         //std::cerr << "total visits: " << order_node->total_visits << '\n';
 
-        tree_search_order(*order_node, rollouts, uct_temperature);
+        search_environment.tree_search_order(*order_node);
 
         /*
         float logN = std::log(float(order_node->total_visits));
@@ -258,8 +267,7 @@ private:
     std::shared_ptr<OrderNode> order_node{};
     std::shared_ptr<ChaosNode> chaos_node{};
 
-    uint rollouts = 7500;
-    float uct_temperature;
+    SearchEnvironment search_environment;
 };
 
 
