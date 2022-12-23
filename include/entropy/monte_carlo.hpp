@@ -212,19 +212,23 @@ public:
     ChaosMove suggest_chaos_move(Colour colour) override {
         if (!chaos_node) chaos_node = chaos_node_buffer.make_shared(board, chip_pool);
         else chaos_node->clear_colours(uint(colour));
-        //std::cerr << chaos_node->total_visits << "\n";
 
         search_environment.tree_search_chaos(*chaos_node, colour);
-        return chaos_node->select_best_node(colour)->parents[chaos_node.get()];
+
+        auto node = chaos_node->select_best_node(colour);
+        auto move = node->parents[chaos_node.get()];
+
+        std::cerr << move.colour << move.pos;
+        std::cerr << " : "
+                  << "total visits = " << chaos_node->total_visits << "; node visits = " << node->total_visits << "; expected score = " << node->average_score() << '\n';
+
+        return node->parents[chaos_node.get()];
     }
 
     OrderMove suggest_order_move() override {
         if (!order_node) order_node = order_node_buffer.make_shared(board, chip_pool);
 
-        //std::cerr << "total visits: " << order_node->total_visits << '\n';
-
         search_environment.tree_search_order(*order_node);
-
         /*
         float logN = std::log(float(order_node->total_visits));
 
@@ -238,18 +242,17 @@ public:
         auto node = order_node->select_best_node();
         auto move = node->parents[order_node.get()];
 
-        std::cerr << "total visits = " << order_node->total_visits << '\n';
         if (move.is_pass()) std::cerr << "PASS";
         else std::cerr << move.from << move.to;
 
-        std::cerr << " : visits = " << node->total_visits << "; expected score = " << node->average_score() << '\n';
+        std::cerr << " : "
+                  << "total visits = " << order_node->total_visits << "; node visits = " << node->total_visits << "; expected score = " << node->average_score() << '\n';
 
         return move;
     }
 
     void register_chaos_move(const ChaosMove &move) override {
         board.place_chip(move);
-        //show_board(board.get_minimal_state());
         chip_pool = ChipPool(chip_pool, move.colour);
 
         if (chaos_node) {
@@ -264,7 +267,6 @@ public:
 
     void register_order_move(const OrderMove &move) override {
         board.move_chip(move);
-        //show_board(board.get_minimal_state());
 
         if (order_node) {
             auto ptr = order_node->get_child(move);
