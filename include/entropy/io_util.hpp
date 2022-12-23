@@ -45,7 +45,12 @@ inline void show_board(const MinimalBoardState &b, std::ostream &out = std::cerr
     out << ' ';
     for (uint column = 0; column < BOARD_SIZE; ++column) out << " =";
     out << "\n ";
-    for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << lookup_score(b.get_vertical_string(column)) / 10;
+    for (uint column = 0; column < BOARD_SIZE; ++column) {
+        auto v = lookup_score(b.get_vertical_string(column)) / 10;
+        out << ' ';
+        if (v) out << v;
+        else out << ' ';
+    }
     out << "\n ";
     for (uint column = 0; column < BOARD_SIZE; ++column) out << ' ' << lookup_score(b.get_vertical_string(column)) % 10;
     out << "   " << b.get_total_score() << "\n\n";
