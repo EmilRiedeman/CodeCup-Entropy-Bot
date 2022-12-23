@@ -108,11 +108,17 @@ inline T *select_child_helper(const std::vector<std::shared_ptr<T>> &vec, F &&ev
     return child->get();
 }
 
-OrderNode::OrderNode(
-        ChaosNode *p,
-        const ChaosMove &new_move) : board(p->board), pool(p->pool, new_move.colour), parent(p), last_move(new_move) {
+OrderNode::OrderNode(ChaosNode *p,
+                     const ChaosMove &new_move) : board(p->board), pool(p->pool, new_move.colour), parents{{p, new_move}} {
     board.place_chip(new_move);
     init();
+}
+
+OrderNode::~OrderNode() {
+    while (!children.empty()) {
+        if (!children.back().unique()) children.back()->parents.erase(this);
+        children.pop_back();
+    }
 }
 
 void OrderNode::init() {
@@ -126,12 +132,12 @@ void OrderNode::init() {
     children.reserve(std::max(unvisited / 3, 2u));
 }
 
-ChaosNode *OrderNode::add_random_child() {
+ChaosNode *OrderNode::add_random_child(SearchEnvironment &environment) {
     auto it = random_element(moves.begin(), unvisited, RNG);
     auto move = *it;
     *it = moves[--unvisited];
 
-    children.push_back(chaos_node_buffer.make_shared(this, move.create()));
+    children.push_back(environment.get_chaos_node(this, move.create()));
     return children.back().get();
 }
 
@@ -148,20 +154,28 @@ ChaosNode *OrderNode::select_best_node() const {
     });
 }
 
-void OrderNode::record_score(uint score) {
-    ++total_visits;
+void OrderNode::record_score(uint score, uint visits) {
+    total_visits += visits;
     total_score += score;
 
-    if (parent) {
-        parent->scores[last_move.colour - 1] += score;
-        ++parent->visits[last_move.colour - 1];
+    for (auto &[parent, m] : parents) {
+        parent->scores[m.colour - 1] += score;
+        parent->visits[m.colour - 1] += visits;
 
-        parent->record_score(score);
+        parent->record_score(score, visits);
     }
 }
 
-ChaosNode::ChaosNode(
-        OrderNode *p, const OrderMove &new_move) : board(p->board), pool(p->pool), parent(p), last_move(new_move) {
+void OrderNode::add_parent(ChaosNode *parent, const ChaosMove &move) {
+    parent->visits[move.colour - 1] += total_visits;
+    parent->scores[move.colour - 1] += total_score;
+
+    parent->record_score(total_score, total_visits);
+    parents[parent] = move;
+}
+
+ChaosNode::ChaosNode(OrderNode *p,
+                     const OrderMove &new_move) : board(p->board), pool(p->pool), parents{{p, new_move}} {
     board.move_chip(new_move);
     init();
 }
@@ -191,7 +205,7 @@ void ChaosNode::init() {
     }
 }
 
-OrderNode *ChaosNode::add_random_child(Colour colour) {
+OrderNode *ChaosNode::add_random_child(Colour colour, SearchEnvironment &environment) {
     uint index = colour - 1;
 
     auto it = random_element(unvisited_moves[index].begin(), unvisited_moves[index].size(), RNG);
@@ -201,7 +215,7 @@ OrderNode *ChaosNode::add_random_child(Colour colour) {
     unvisited_moves[index].pop_back();
     if (unvisited_moves[index].empty()) unvisited_moves[index] = {};
 
-    children[index].push_back(order_node_buffer.make_shared(this, ChaosMove{p, colour}));
+    children[index].push_back(environment.get_order_node(this, {p, colour}));
     return children[index].back().get();
 }
 
@@ -214,22 +228,35 @@ OrderNode *ChaosNode::select_child(Colour colour, const float uct_temperature) c
 
 OrderNode *ChaosNode::select_best_node(Colour colour) const {
     return select_child_helper(children[colour - 1], [](const auto &node) {
-        return node.average_score();
+        return -node.average_score();
     });
 }
 
-void ChaosNode::record_score(uint score) {
-    ++total_visits;
+void ChaosNode::record_score(uint score, uint v) {
+    total_visits += v;
     total_score += score;
 
-    if (parent) parent->record_score(score);
+    for (auto &[parent, m] : parents)
+        parent->record_score(score, v);
+}
+
+void ChaosNode::add_parent(OrderNode *parent, const OrderMove &move) {
+    parent->record_score(total_score, total_visits);
+    parents[parent] = move;
+}
+
+void ChaosNode::destruct_children(std::vector<std::shared_ptr<OrderNode>> &vec) {
+    while (!vec.empty()) {
+        if (!vec.back().unique()) vec.back()->parents.erase(this);
+        vec.pop_back();
+    }
 }
 
 inline void SearchEnvironment::tree_search_helper(OrderNode *o_node) {
     while (true) {
         o_node->try_init();
         if (o_node->can_add_child()) {
-            o_node->add_random_child()->rollout();
+            o_node->add_random_child(*this)->rollout();
             break;
         }
         auto c_node = o_node->select_child(uct_temperature);
@@ -241,18 +268,57 @@ inline void SearchEnvironment::tree_search_helper(OrderNode *o_node) {
         }
         c_node->try_init();
         if (c_node->can_add_child(random_colour)) {
-            c_node->add_random_child(random_colour)->rollout();
+            c_node->add_random_child(random_colour, *this)->rollout();
             break;
         }
         o_node = c_node->select_child(random_colour, uct_temperature);
     }
 }
 
+std::shared_ptr<OrderNode> SearchEnvironment::get_order_node(ChaosNode *parent, const ChaosMove &move) {
+    auto new_hash = parent->board.get_hash();
+    new_hash.decrement();
+    new_hash.change_state(move.colour - 1, move.pos.index());
+    auto it = cached_order_nodes.find(new_hash);
+    if (it != cached_order_nodes.end()) {
+        if (!it->second.expired()) {
+            auto ptr = it->second.lock();
+            ptr->add_parent(parent, move);
+
+            //std::cerr << "found cached order node with " << ptr->total_visits << " visits !\n";
+
+            return ptr;
+        }
+    } else it = cached_order_nodes.emplace(new_hash, std::weak_ptr<OrderNode>()).first;
+    auto new_node = order_node_buffer.make_shared(parent, move);
+    it->second = new_node;
+    return new_node;
+}
+
+std::shared_ptr<ChaosNode> SearchEnvironment::get_chaos_node(OrderNode *parent, const OrderMove &move) {
+    auto new_hash = parent->board.get_hash();
+    if (!move.is_pass()) {
+        auto type = parent->board.get_minimal_state().read_chip(move.from.row(), move.from.column());
+        new_hash.change_state(type, move.from.index());
+        new_hash.change_state(type, move.to.index());
+    }
+    auto it = cached_chaos_nodes.find(new_hash);
+    if (it != cached_chaos_nodes.end()) {
+        if (!it->second.expired()) {
+            auto ptr = it->second.lock();
+            ptr->add_parent(parent, move);
+            return ptr;
+        }
+    } else it = cached_chaos_nodes.emplace(new_hash, std::weak_ptr<ChaosNode>()).first;
+    auto new_node = chaos_node_buffer.make_shared(parent, move);
+    it->second = new_node;
+    return new_node;
+}
+
 void SearchEnvironment::tree_search_order(OrderNode &root) {
     root.try_init();
-    root.set_as_root();
 
-    while (root.can_add_child()) root.add_random_child()->rollout();
+    while (root.can_add_child()) root.add_random_child(*this)->rollout();
 
     for (uint i = 0; i < rollouts; ++i) {
         tree_search_helper(&root);
@@ -262,9 +328,8 @@ void SearchEnvironment::tree_search_order(OrderNode &root) {
 void SearchEnvironment::tree_search_chaos(ChaosNode &root, Colour c) {
     if (root.is_terminal()) return;
     root.try_init();
-    root.set_as_root();
 
-    while (root.can_add_child(c)) root.add_random_child(c)->rollout();
+    while (root.can_add_child(c)) root.add_random_child(c, *this)->rollout();
 
     for (uint i = 0; i < rollouts; ++i) {
         tree_search_helper(root.select_child(c, uct_temperature));

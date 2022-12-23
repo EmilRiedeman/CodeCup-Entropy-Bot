@@ -136,15 +136,16 @@ inline void benchmark_rollout() {
     });
 }
 
+template <uint GAMES = 5>
 inline void benchmark_simulated_game() {
     using namespace mcts;
     {
         Timer t("MCTS (chaos) vs Random (order)");
-        for (uint i = 0; i < 20; ++i) simulate_game(mcts::MoveMaker(), RandomMoveMaker());
+        for (uint i = 0; i < GAMES; ++i) simulate_game(mcts::MoveMaker(), RandomMoveMaker());
     }
     {
         Timer t("Random (chaos) vs MCTS (order)");
-        for (uint i = 0; i < 20; ++i) simulate_game(RandomMoveMaker(), mcts::MoveMaker());
+        for (uint i = 0; i < GAMES; ++i) simulate_game(RandomMoveMaker(), mcts::MoveMaker());
     }
 }
 

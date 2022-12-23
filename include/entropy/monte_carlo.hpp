@@ -3,7 +3,9 @@
 #include "board.hpp"
 #include "move_maker.hpp"
 
+#include <map>
 #include <memory>
+#include <utility>
 
 namespace entropy::mcts {
 
@@ -33,7 +35,14 @@ inline float uct_score(float s, float logN, float n, float temperature) {
 
 struct SearchEnvironment {
     float uct_temperature = 0.45;
-    uint rollouts = 7'500;
+    uint rollouts = 10'000;
+
+    std::unordered_map<BoardHash, std::weak_ptr<OrderNode>> cached_order_nodes{};
+    std::unordered_map<BoardHash, std::weak_ptr<ChaosNode>> cached_chaos_nodes{};
+
+    std::shared_ptr<OrderNode> get_order_node(ChaosNode *parent, const ChaosMove &move);
+
+    std::shared_ptr<ChaosNode> get_chaos_node(OrderNode *parent, const OrderMove &move);
 
     void tree_search_order(OrderNode &root);
 
@@ -47,24 +56,22 @@ class OrderNode {
 public:
     OrderNode() = delete;
 
-    OrderNode(
-            const BoardState &b,
-            const ChipPool &pool) : board(b), pool(pool) { init(); }
+    OrderNode(const BoardState &b,
+              const ChipPool &pool) : board(b), pool(pool) { init(); }
 
-    OrderNode(
-            ChaosNode *p,
-            const ChaosMove &new_move);
+    OrderNode(ChaosNode *p,
+              const ChaosMove &new_move);
 
-    void set_as_root() { parent = nullptr; }
+    ~OrderNode();
 
     std::shared_ptr<ChaosNode> *get_child(const OrderMove &move) {
         auto it = std::find_if(children.begin(), children.end(),
-                               [=](const auto &x) { return move == x->last_move; });
+                               [=](const auto &x) { return move == x->parents[this]; });
         if (it == children.end()) return nullptr;
         return &*it;
     }
 
-    ChaosNode *add_random_child();
+    ChaosNode *add_random_child(SearchEnvironment &environment);
 
     ChaosNode *select_child(float uct_temperature) const;
 
@@ -78,21 +85,21 @@ public:
         if (!initialized) init();
     }
 
-    [[nodiscard]] float average_score() const { return -float(total_score) / float(total_visits); }
+    [[nodiscard]] float average_score() const { return float(total_score) / float(total_visits); }
 
-    [[nodiscard]] float branch_score(const float logN, const float uct_temperature) const { return uct_score(average_score(), logN, float(total_visits), uct_temperature); }
+    [[nodiscard]] float branch_score(const float logN, const float uct_temperature) const { return uct_score(-average_score(), logN, float(total_visits), uct_temperature); }
 
 private:
     void init();
 
-    void record_score(uint score);
+    void record_score(uint score, uint visits = 1);
+
+    void add_parent(ChaosNode *parent, const ChaosMove &move);
 
     BoardState board;
     const ChipPool pool;
-    ChaosNode *parent{};
+    std::map<ChaosNode *, ChaosMove> parents{};
     std::vector<std::shared_ptr<ChaosNode>> children;
-
-    const ChaosMove last_move{};
 
     uint total_visits{};
     uint total_score{};
@@ -102,6 +109,7 @@ private:
 
     bool initialized = false;
 
+    friend SearchEnvironment;
     friend ChaosNode;
     friend MoveMaker;
 };
@@ -110,25 +118,27 @@ class ChaosNode {
 public:
     ChaosNode() = delete;
 
-    ChaosNode(
-            const BoardState &b,
-            const ChipPool &pool) : board(b), pool(pool) { init(); }
+    ChaosNode(const BoardState &b,
+              const ChipPool &pool) : board(b), pool(pool) { init(); }
 
-    ChaosNode(
-            OrderNode *p,
-            const OrderMove &new_move);
+    ChaosNode(OrderNode *p,
+              const OrderMove &new_move);
 
-    void set_as_root() { parent = nullptr; }
+    ~ChaosNode() {
+        for (auto &vec : children) {
+            destruct_children(vec);
+        }
+    }
 
     std::shared_ptr<OrderNode> *get_child(const ChaosMove &move) {
         auto &vec = children[move.colour - 1];
         auto it = std::find_if(vec.begin(), vec.end(),
-                               [=](const auto &x) { return move.pos.p == x->last_move.pos.p; });
+                               [=](const auto &x) { return move.pos.p == x->parents[this].pos.p; });
         if (it == vec.end()) return nullptr;
         return &*it;
     }
 
-    OrderNode *add_random_child(Colour colour);
+    OrderNode *add_random_child(Colour colour, SearchEnvironment &environment);
 
     [[nodiscard]] OrderNode *select_child(Colour colour, float uct_temperature) const;
 
@@ -155,7 +165,7 @@ public:
             if (c == keep - 1) continue;
             unvisited_moves[c] = {};
 
-            children[c].clear();
+            destruct_children(children[c]);
 
             total_visits -= visits[c];
             total_score -= scores[c];
@@ -168,14 +178,16 @@ public:
 private:
     void init();
 
-    void record_score(uint score);
+    void record_score(uint score, uint v = 1);
+
+    void add_parent(OrderNode *parent, const OrderMove &move);
+
+    void destruct_children(std::vector<std::shared_ptr<OrderNode>> &vec);
 
     BoardState board;
     const ChipPool pool;
-    OrderNode *parent{};
+    std::map<OrderNode *, OrderMove> parents{};
     std::array<std::vector<std::shared_ptr<OrderNode>>, ChipPool::N> children{};
-
-    const OrderMove last_move{};
 
     std::array<uint, ChipPool::N> visits{};
     uint total_visits{};
@@ -186,13 +198,14 @@ private:
 
     bool initialized = false;
 
+    friend SearchEnvironment;
     friend OrderNode;
     friend MoveMaker;
 };
 
 class MoveMaker final : public entropy::MoveMaker {
 public:
-    explicit MoveMaker(SearchEnvironment environment = {}) : search_environment(environment) {
+    explicit MoveMaker(SearchEnvironment environment = {}) : search_environment(std::move(environment)) {
         std::cerr << "MCTS Seed: " << RNG.seed << '\n';
     }
 
@@ -202,7 +215,7 @@ public:
         //std::cerr << chaos_node->total_visits << "\n";
 
         search_environment.tree_search_chaos(*chaos_node, colour);
-        return chaos_node->select_best_node(colour)->last_move;
+        return chaos_node->select_best_node(colour)->parents[chaos_node.get()];
     }
 
     OrderMove suggest_order_move() override {
@@ -223,13 +236,15 @@ public:
         */
 
         auto node = order_node->select_best_node();
+        auto move = node->parents[order_node.get()];
 
-        if (node->last_move.is_pass()) std::cerr << "PASS";
-        else std::cerr << node->last_move.from << node->last_move.to;
+        std::cerr << "total visits = " << order_node->total_visits << '\n';
+        if (move.is_pass()) std::cerr << "PASS";
+        else std::cerr << move.from << move.to;
 
         std::cerr << " : visits = " << node->total_visits << "; expected score = " << node->average_score() << '\n';
 
-        return node->last_move;
+        return move;
     }
 
     void register_chaos_move(const ChaosMove &move) override {
@@ -240,7 +255,7 @@ public:
         if (chaos_node) {
             auto ptr = chaos_node->get_child(move);
 
-            if (ptr) order_node = std::move(*ptr);
+            if (ptr) order_node = *ptr;
             else order_node = nullptr;
 
             chaos_node = nullptr;
@@ -254,7 +269,7 @@ public:
         if (order_node) {
             auto ptr = order_node->get_child(move);
 
-            if (ptr) chaos_node = std::move(*ptr);
+            if (ptr) chaos_node = *ptr;
             else chaos_node = nullptr;
 
             order_node = nullptr;
