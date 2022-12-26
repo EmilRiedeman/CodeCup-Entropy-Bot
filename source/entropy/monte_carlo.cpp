@@ -111,7 +111,6 @@ inline T *select_child_helper(const std::vector<std::shared_ptr<T>> &vec, F &&ev
 OrderNode::OrderNode(ChaosNode *p,
                      const ChaosMove &new_move) : board(p->board), pool(p->pool, new_move.colour), parents{{p, new_move}} {
     board.place_chip(new_move);
-    init();
 }
 
 OrderNode::~OrderNode() {
@@ -177,7 +176,6 @@ void OrderNode::add_parent(ChaosNode *parent, const ChaosMove &move) {
 ChaosNode::ChaosNode(OrderNode *p,
                      const OrderMove &new_move) : board(p->board), pool(p->pool), parents{{p, new_move}} {
     board.move_chip(new_move);
-    init();
 }
 
 void ChaosNode::init() {

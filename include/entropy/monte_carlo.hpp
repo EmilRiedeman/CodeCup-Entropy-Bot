@@ -57,7 +57,7 @@ public:
     OrderNode() = delete;
 
     OrderNode(const BoardState &b,
-              const ChipPool &pool) : board(b), pool(pool) { init(); }
+              const ChipPool &pool) : board(b), pool(pool) {}
 
     OrderNode(ChaosNode *p,
               const ChaosMove &new_move);
@@ -119,7 +119,7 @@ public:
     ChaosNode() = delete;
 
     ChaosNode(const BoardState &b,
-              const ChipPool &pool) : board(b), pool(pool) { init(); }
+              const ChipPool &pool) : board(b), pool(pool) {}
 
     ChaosNode(OrderNode *p,
               const OrderMove &new_move);
