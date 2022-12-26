@@ -35,7 +35,7 @@ inline float uct_score(float s, float logN, float n, float temperature) {
 
 struct SearchEnvironment {
     float uct_temperature = 0.45;
-    uint rollouts = 18'500;
+    uint rollouts = 8'500;
 
     std::unordered_map<BoardHash, std::weak_ptr<OrderNode>> cached_order_nodes{};
     std::unordered_map<BoardHash, std::weak_ptr<ChaosNode>> cached_chaos_nodes{};
