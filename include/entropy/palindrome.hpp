@@ -16,13 +16,13 @@ private:
 public:
     uint hash;
 
-    [[nodiscard]] constexpr uint read(uint index) const { return (hash / POWER_TABLE[index]) % C; }
+    constexpr uint read(uint index) const { return (hash / POWER_TABLE[index]) % C; }
 
-    [[nodiscard]] constexpr uint read_first() const { return hash % C; }
+    constexpr uint read_first() const { return hash % C; }
 
-    [[nodiscard]] constexpr uint read_first(uint i) const { return hash % POWER_TABLE[i]; }
+    constexpr uint read_first(uint i) const { return hash % POWER_TABLE[i]; }
 
-    [[nodiscard]] constexpr NumberString set_at_empty_copy(uint i, uint c) const { return {hash + POWER_TABLE[i] * c}; }
+    constexpr NumberString set_at_empty_copy(uint i, uint c) const { return {hash + POWER_TABLE[i] * c}; }
 
     constexpr void set_at_empty(uint i, uint c) { hash += POWER_TABLE[i] * c; }
 
@@ -55,11 +55,11 @@ private:
 public:
     uint hash;
 
-    [[nodiscard]] constexpr uint read(uint index) const { return (hash >> (BITS_PER_ELEMENT * index)) & BIT_MASK; }
+    constexpr uint read(uint index) const { return (hash >> (BITS_PER_ELEMENT * index)) & BIT_MASK; }
 
-    [[nodiscard]] constexpr uint read_first() const { return hash & BIT_MASK; }
+    constexpr uint read_first() const { return hash & BIT_MASK; }
 
-    [[nodiscard]] constexpr uint read_first(uint i) const { return hash & (1u << ((BITS_PER_ELEMENT * i) - 1)); }
+    constexpr uint read_first(uint i) const { return hash & (1u << ((BITS_PER_ELEMENT * i) - 1)); }
 
     constexpr NumberString set_at_empty_copy(uint i, uint c) const { return {hash | (c << (i * BITS_PER_ELEMENT))}; }
 

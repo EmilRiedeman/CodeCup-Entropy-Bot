@@ -26,7 +26,7 @@ public:
 
     void decrement() { --open_spaces; }
 
-    [[nodiscard]] uint get_open_spaces() const { return open_spaces; }
+    uint get_open_spaces() const { return open_spaces; }
 
     bool operator==(const ZobristHash &o) const { return hash == o.hash && open_spaces == o.open_spaces; }
 

@@ -79,15 +79,17 @@ public:
 
     uint rollout() const { return smart_rollout_order(board, pool); }
 
-    [[nodiscard]] bool can_add_child() const { return unvisited; }
+    bool can_add_child() const { return unvisited; }
 
     void try_init() {
         if (!initialized) init();
     }
 
-    [[nodiscard]] float average_score() const { return float(total_score) / float(total_visits); }
+    float average_score() const { return float(total_score) / float(total_visits); }
 
-    [[nodiscard]] float branch_score(const float logN, float uct_temperature) const { return uct_score(-average_score(), logN, float(total_visits), uct_temperature); }
+    float branch_score(const float logN, float uct_temperature) const {
+        return uct_score(-average_score(), logN, float(total_visits), uct_temperature);
+    }
 
 private:
     void init();
@@ -140,25 +142,27 @@ public:
 
     OrderNode *add_random_child(Colour colour, SearchEnvironment &environment);
 
-    [[nodiscard]] OrderNode *select_child(Colour colour, float uct_temperature) const;
+    OrderNode *select_child(Colour colour, float uct_temperature) const;
 
-    [[nodiscard]] OrderNode *select_best_node(Colour colour) const;
+    OrderNode *select_best_node(Colour colour) const;
 
-    [[nodiscard]] uint rollout() const { return smart_rollout_chaos(board, pool); }
+    uint rollout() const { return smart_rollout_chaos(board, pool); }
 
-    [[nodiscard]] bool can_add_child(Colour colour) const { return !unvisited_moves[colour - 1].empty(); }
+    bool can_add_child(Colour colour) const { return !unvisited_moves[colour - 1].empty(); }
 
     void try_init() {
         if (!initialized) init();
     }
 
-    [[nodiscard]] float average_score() const { return float(total_score) / float(total_visits); }
+    float average_score() const { return float(total_score) / float(total_visits); }
 
-    [[nodiscard]] float branch_score(const float logN, float uct_temperature) const { return uct_score(average_score(), logN, float(total_visits), uct_temperature); }
+    float branch_score(const float logN, float uct_temperature) const {
+        return uct_score(average_score(), logN, float(total_visits), uct_temperature);
+    }
 
-    [[nodiscard]] bool is_terminal() const { return !board.get_open_cells(); }
+    bool is_terminal() const { return !board.get_open_cells(); }
 
-    [[nodiscard]] Colour random_colour() const { return pool.random_chip(RNG); }
+    Colour random_colour() const { return pool.random_chip(RNG); }
 
     void clear_colours(uint keep) {
         for (uint c = 0; c < children.size(); ++c) {

@@ -26,7 +26,7 @@ struct Timer {
         t_end = std::chrono::high_resolution_clock::now();
     }
 
-    [[nodiscard]] double millis() const {
+    double millis() const {
         return (double) std::chrono::duration_cast<std::chrono::microseconds>((t_end - t_begin)).count() / 1000.;
     }
 

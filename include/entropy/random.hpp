@@ -22,9 +22,9 @@ struct FastRand {
         return seed >> 17;
     }
 
-    [[nodiscard]] constexpr static result_type min() { return 0; }
+    constexpr static result_type min() { return 0; }
 
-    [[nodiscard]] constexpr static result_type max() { return std::numeric_limits<int16_t>::max(); }
+    constexpr static result_type max() { return std::numeric_limits<int16_t>::max(); }
 };
 
 class MersenneTwisterEngine64 {
@@ -47,9 +47,9 @@ public:
         return y;
     }
 
-    [[nodiscard]] constexpr static result_type min() { return 0; }
+    constexpr static result_type min() { return 0; }
 
-    [[nodiscard]] constexpr static result_type max() { return std::numeric_limits<result_type>::max(); }
+    constexpr static result_type max() { return std::numeric_limits<result_type>::max(); }
 
 private:
     static constexpr std::size_t N = 312;

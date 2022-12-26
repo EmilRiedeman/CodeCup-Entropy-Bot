@@ -44,13 +44,13 @@ struct Position {
 
     Position(uint row, uint column) : p(row * BOARD_SIZE + column) {}
 
-    [[nodiscard]] constexpr bool is_none() const { return p == NONE_VALUE; }
+    constexpr bool is_none() const { return p == NONE_VALUE; }
 
-    [[nodiscard]] constexpr IntType index() const { return p; }
+    constexpr IntType index() const { return p; }
 
-    [[nodiscard]] constexpr IntType row() const { return p / BOARD_SIZE; }
+    constexpr IntType row() const { return p / BOARD_SIZE; }
 
-    [[nodiscard]] constexpr IntType column() const { return p % BOARD_SIZE; }
+    constexpr IntType column() const { return p % BOARD_SIZE; }
 };
 
 struct ChipPool {
@@ -115,9 +115,9 @@ struct OrderMove {
 
     bool operator==(const OrderMove &m) const { return (is_pass() && m.is_pass()) || (from.p == m.from.p && to.p == m.to.p); }
 
-    [[nodiscard]] bool is_pass() const { return from.p == Position::NONE_VALUE; }
+    bool is_pass() const { return from.p == Position::NONE_VALUE; }
 
-    [[nodiscard]] bool is_vertical() const { return from.column() == to.column(); }
+    bool is_vertical() const { return from.column() == to.column(); }
 
     struct Compact {
         constexpr static inline uint8_t PASS_VALUE = std::numeric_limits<uint8_t>::max();
@@ -139,7 +139,7 @@ struct OrderMove {
 
         void make_pass() { from = PASS_VALUE; }
 
-        [[nodiscard]] OrderMove create() const {
+        OrderMove create() const {
             return is_pass() ? OrderMove{}
                              : OrderMove{from, to};
         }
@@ -152,7 +152,7 @@ public:
 
     MinimalBoardState(const MinimalBoardState &) = default;
 
-    [[nodiscard]] uint read_chip(uint row, uint column) const { return horizontal[row].read(column); }
+    uint read_chip(uint row, uint column) const { return horizontal[row].read(column); }
 
     void place_chip(uint row, uint column, Colour c) {
         horizontal[row].set_at_empty(column, c);
@@ -175,13 +175,15 @@ public:
         remove_chip(f_row, f_column);
     }
 
-    [[nodiscard]] BoardString get_horizontal_string(uint row) const { return horizontal[row]; }
+    BoardString get_horizontal_string(uint row) const { return horizontal[row]; }
 
-    [[nodiscard]] BoardString get_vertical_string(uint column) const { return vertical[column]; }
+    BoardString get_vertical_string(uint column) const { return vertical[column]; }
 
-    [[nodiscard]] uint get_score(uint row, uint column) const { return lookup_score(horizontal[row]) + lookup_score(vertical[column]); }
+    uint get_score(uint row, uint column) const {
+        return lookup_score(horizontal[row]) + lookup_score(vertical[column]);
+    }
 
-    [[nodiscard]] uint get_total_score() const {
+    uint get_total_score() const {
         uint r = 0;
         for (uint i = 0; i < BOARD_SIZE; ++i) r += lookup_score(horizontal[i]) + lookup_score(vertical[i]);
         return r;
@@ -313,13 +315,13 @@ public:
 
     BoardState(const BoardState &) = default;
 
-    [[nodiscard]] const MinimalBoardState &get_minimal_state() const { return minimal_state; }
+    const MinimalBoardState &get_minimal_state() const { return minimal_state; }
 
-    [[nodiscard]] uint get_open_cells() const { return hash.get_open_spaces(); }
+    uint get_open_cells() const { return hash.get_open_spaces(); }
 
-    [[nodiscard]] BoardHash get_hash() const { return hash; }
+    BoardHash get_hash() const { return hash; }
 
-    [[nodiscard]] uint get_total_score() const { return total_score; }
+    uint get_total_score() const { return total_score; }
 
     void place_chip(const ChaosMove &move) {
         const auto row = move.pos.row();
