@@ -133,7 +133,7 @@ void OrderNode::init() {
 }
 
 ChaosNode *OrderNode::add_random_child(SearchEnvironment &environment) {
-    auto it = random_element(moves.begin(), unvisited, RNG);
+    auto it = random_element(moves, unvisited, RNG);
     auto move = *it;
     *it = moves[--unvisited];
 

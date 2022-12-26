@@ -104,7 +104,7 @@ private:
     uint total_visits{};
     uint total_score{};
 
-    std::array<OrderMove::Compact, MAX_POSSIBLE_ORDER_MOVES> moves{};
+    OrderMove::Compact moves[MAX_POSSIBLE_ORDER_MOVES];
     uint unvisited{};
 
     bool initialized = false;
