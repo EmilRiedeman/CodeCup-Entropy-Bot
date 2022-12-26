@@ -87,7 +87,7 @@ public:
 
     [[nodiscard]] float average_score() const { return float(total_score) / float(total_visits); }
 
-    [[nodiscard]] float branch_score(const float logN, const float uct_temperature) const { return uct_score(-average_score(), logN, float(total_visits), uct_temperature); }
+    [[nodiscard]] float branch_score(const float logN, float uct_temperature) const { return uct_score(-average_score(), logN, float(total_visits), uct_temperature); }
 
 private:
     void init();
@@ -154,7 +154,7 @@ public:
 
     [[nodiscard]] float average_score() const { return float(total_score) / float(total_visits); }
 
-    [[nodiscard]] float branch_score(const float logN, const float uct_temperature) const { return uct_score(average_score(), logN, float(total_visits), uct_temperature); }
+    [[nodiscard]] float branch_score(const float logN, float uct_temperature) const { return uct_score(average_score(), logN, float(total_visits), uct_temperature); }
 
     [[nodiscard]] bool is_terminal() const { return !board.get_open_cells(); }
 

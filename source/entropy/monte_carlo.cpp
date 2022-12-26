@@ -141,7 +141,7 @@ ChaosNode *OrderNode::add_random_child(SearchEnvironment &environment) {
     return children.back().get();
 }
 
-ChaosNode *OrderNode::select_child(const float uct_temperature) const {
+ChaosNode *OrderNode::select_child(float uct_temperature) const {
     const auto logN = std::log(float(total_visits));
     return select_child_helper(children, [=](const auto &node) {
         return node.branch_score(logN, uct_temperature);
@@ -219,7 +219,7 @@ OrderNode *ChaosNode::add_random_child(Colour colour, SearchEnvironment &environ
     return children[index].back().get();
 }
 
-OrderNode *ChaosNode::select_child(Colour colour, const float uct_temperature) const {
+OrderNode *ChaosNode::select_child(Colour colour, float uct_temperature) const {
     const auto logN = std::log(float(visits[colour - 1]));
     return select_child_helper(children[colour - 1], [=](const auto &node) {
         return node.branch_score(logN, uct_temperature);
