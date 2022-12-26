@@ -35,7 +35,7 @@ inline float uct_score(float s, float logN, float n, float temperature) {
 
 struct SearchEnvironment {
     float uct_temperature = 0.45;
-    uint rollouts = 8'500;
+    uint rollouts = 18'500;
 
     std::unordered_map<BoardHash, std::weak_ptr<OrderNode>> cached_order_nodes{};
     std::unordered_map<BoardHash, std::weak_ptr<ChaosNode>> cached_chaos_nodes{};
@@ -49,7 +49,7 @@ struct SearchEnvironment {
     void tree_search_chaos(ChaosNode &root, Colour c);
 
 private:
-    void tree_search_helper(OrderNode *o_node);
+    void tree_search_helper(OrderNode *order_node, ChaosNode *chaos_root = nullptr, Colour root_colour = 0);
 };
 
 class OrderNode {
@@ -77,7 +77,7 @@ public:
 
     ChaosNode *select_best_node() const;
 
-    void rollout() { record_score(smart_rollout_order(board, pool)); }
+    uint rollout() const { return smart_rollout_order(board, pool); }
 
     [[nodiscard]] bool can_add_child() const { return unvisited; }
 
@@ -92,7 +92,7 @@ public:
 private:
     void init();
 
-    void record_score(uint score, uint visits = 1);
+    void record_score(uint score);
 
     void add_parent(ChaosNode *parent, const ChaosMove &move);
 
@@ -144,7 +144,7 @@ public:
 
     [[nodiscard]] OrderNode *select_best_node(Colour colour) const;
 
-    void rollout() { record_score(smart_rollout_chaos(board, pool)); }
+    [[nodiscard]] uint rollout() const { return smart_rollout_chaos(board, pool); }
 
     [[nodiscard]] bool can_add_child(Colour colour) const { return !unvisited_moves[colour - 1].empty(); }
 
@@ -178,7 +178,7 @@ public:
 private:
     void init();
 
-    void record_score(uint score, uint v = 1);
+    void record_score(uint score, Colour colour);
 
     void add_parent(OrderNode *parent, const OrderMove &move);
 
@@ -213,6 +213,7 @@ public:
         if (!chaos_node) chaos_node = chaos_node_buffer.make_shared(board, chip_pool);
         else chaos_node->clear_colours(uint(colour));
 
+        std::cerr << "cached visits = " << chaos_node->total_visits << '\n';
         search_environment.tree_search_chaos(*chaos_node, colour);
 
         auto node = chaos_node->select_best_node(colour);
@@ -228,14 +229,18 @@ public:
     OrderMove suggest_order_move() override {
         if (!order_node) order_node = order_node_buffer.make_shared(board, chip_pool);
 
+        std::cerr << "cached visits = " << order_node->total_visits << '\n';
         search_environment.tree_search_order(*order_node);
+
         /*
         float logN = std::log(float(order_node->total_visits));
 
         for (const auto &c : order_node->children) {
-            if (c->last_move.is_pass()) std::cerr << "PASS";
-            else std::cerr << c->last_move.from << c->last_move.to;
-            std::cerr << " : " << c->branch_score(logN, uct_temperature) << " " << c->total_visits << " " << c->average_score() << '\n';
+            auto move = c->parents[order_node.get()];
+
+            if (move.is_pass()) std::cerr << "PASS";
+            else std::cerr << move.from << move.to;
+            std::cerr << " : " << c->branch_score(logN, search_environment.uct_temperature) << " " << c->total_visits << " " << c->average_score() << '\n';
         }
         */
 

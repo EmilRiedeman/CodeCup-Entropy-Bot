@@ -153,23 +153,12 @@ ChaosNode *OrderNode::select_best_node() const {
     });
 }
 
-void OrderNode::record_score(uint score, uint visits) {
-    total_visits += visits;
+void OrderNode::record_score(uint score) {
+    ++total_visits;
     total_score += score;
-
-    for (auto &[parent, m] : parents) {
-        parent->scores[m.colour - 1] += score;
-        parent->visits[m.colour - 1] += visits;
-
-        parent->record_score(score, visits);
-    }
 }
 
 void OrderNode::add_parent(ChaosNode *parent, const ChaosMove &move) {
-    parent->visits[move.colour - 1] += total_visits;
-    parent->scores[move.colour - 1] += total_score;
-
-    parent->record_score(total_score, total_visits);
     parents[parent] = move;
 }
 
@@ -182,6 +171,7 @@ void ChaosNode::init() {
     initialized = true;
 
     const uint N = board.get_open_cells();
+    if (!N) return;
 
     std::vector<uint8_t> possible_moves;
     possible_moves.reserve(N);
@@ -230,16 +220,17 @@ OrderNode *ChaosNode::select_best_node(Colour colour) const {
     });
 }
 
-void ChaosNode::record_score(uint score, uint v) {
-    total_visits += v;
+void ChaosNode::record_score(uint score, Colour colour) {
+    ++total_visits;
     total_score += score;
 
-    for (auto &[parent, m] : parents)
-        parent->record_score(score, v);
+    if (colour) {
+        ++visits[colour - 1];
+        scores[colour - 1] += score;
+    }
 }
 
 void ChaosNode::add_parent(OrderNode *parent, const OrderMove &move) {
-    parent->record_score(total_score, total_visits);
     parents[parent] = move;
 }
 
@@ -279,8 +270,7 @@ std::shared_ptr<ChaosNode> SearchEnvironment::get_chaos_node(OrderNode *parent, 
     }
     auto it = cached_chaos_nodes.find(new_hash);
     if (it != cached_chaos_nodes.end()) {
-        if (!it->second.expired()) {
-            auto ptr = it->second.lock();
+        if (auto ptr = it->second.lock()) {
             ptr->add_parent(parent, move);
             return ptr;
         }
@@ -293,7 +283,13 @@ std::shared_ptr<ChaosNode> SearchEnvironment::get_chaos_node(OrderNode *parent, 
 void SearchEnvironment::tree_search_order(OrderNode &root) {
     root.try_init();
 
-    while (root.can_add_child()) root.add_random_child(*this)->rollout();
+    while (root.can_add_child()) {
+        auto child = root.add_random_child(*this);
+        auto score = child->rollout();
+
+        root.record_score(score);
+        child->record_score(score, 0);
+    }
 
     for (uint i = 0; i < rollouts; ++i) {
         tree_search_helper(&root);
@@ -304,33 +300,54 @@ void SearchEnvironment::tree_search_chaos(ChaosNode &root, Colour c) {
     if (root.is_terminal()) return;
     root.try_init();
 
-    while (root.can_add_child(c)) root.add_random_child(c, *this)->rollout();
+    while (root.can_add_child(c)) {
+        auto child = root.add_random_child(c, *this);
+        auto score = child->rollout();
+
+        root.record_score(score, c);
+        child->record_score(score);
+    }
 
     for (uint i = 0; i < rollouts; ++i) {
-        tree_search_helper(root.select_child(c, uct_temperature));
+        tree_search_helper(root.select_child(c, uct_temperature), &root, c);
     }
 }
 
-inline void SearchEnvironment::tree_search_helper(OrderNode *o_node) {
-    while (true) {
-        o_node->try_init();
-        if (o_node->can_add_child()) {
-            o_node->add_random_child(*this)->rollout();
-            break;
-        }
-        auto c_node = o_node->select_child(uct_temperature);
-        auto random_colour = c_node->random_colour();
+inline void SearchEnvironment::tree_search_helper(OrderNode *order_node, ChaosNode *chaos_root, Colour root_colour) {
+    OrderNode *order_nodes[BOARD_AREA]{order_node};
+    ChaosNode *chaos_nodes[BOARD_AREA]{chaos_root};
+    Colour colour_sequence[BOARD_AREA]{root_colour};
 
-        if (c_node->is_terminal()) {
-            c_node->rollout();
+    std::size_t depth = 0;
+    uint rollout_score;
+
+    while (true) {
+        order_nodes[depth]->try_init();
+        if (order_nodes[depth]->can_add_child()) {
+            rollout_score = order_nodes[depth]->add_random_child(*this)->rollout();
             break;
         }
-        c_node->try_init();
-        if (c_node->can_add_child(random_colour)) {
-            c_node->add_random_child(random_colour, *this)->rollout();
+        chaos_nodes[depth + 1] = order_nodes[depth]->select_child(uct_temperature);
+
+        ++depth;
+
+        if (chaos_nodes[depth]->is_terminal()) {
+            rollout_score = chaos_nodes[depth]->board.get_total_score();
             break;
         }
-        o_node = c_node->select_child(random_colour, uct_temperature);
+
+        chaos_nodes[depth]->try_init();
+        auto random_colour = colour_sequence[depth] = chaos_nodes[depth]->random_colour();
+        if (chaos_nodes[depth]->can_add_child(random_colour)) {
+            rollout_score = chaos_nodes[depth]->add_random_child(random_colour, *this)->rollout();
+            break;
+        }
+        order_nodes[depth] = chaos_nodes[depth]->select_child(random_colour, uct_temperature);
+    }
+
+    for (std::size_t i = 0; i <= depth; ++i) {
+        if (order_nodes[i]) order_nodes[i]->record_score(rollout_score);
+        if (chaos_nodes[i]) chaos_nodes[i]->record_score(rollout_score, colour_sequence[i]);
     }
 }
 

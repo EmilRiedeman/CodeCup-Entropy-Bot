@@ -16,7 +16,7 @@ int main(int argc, const char *args[]) {
             //benchmark_rollout();
         }
         if (!std::strcmp(args[1], "competition")) {
-            simulate_game<true>(mcts::MoveMaker({.7}), mcts::MoveMaker({.7}));
+            simulate_game<true>(mcts::MoveMaker({.7}), mcts::MoveMaker({.45}));
             return 0;
 
             constexpr uint N = 20;
