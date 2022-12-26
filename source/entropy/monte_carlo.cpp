@@ -252,29 +252,6 @@ void ChaosNode::destruct_children(std::vector<std::shared_ptr<OrderNode>> &vec) 
     }
 }
 
-inline void SearchEnvironment::tree_search_helper(OrderNode *o_node) {
-    while (true) {
-        o_node->try_init();
-        if (o_node->can_add_child()) {
-            o_node->add_random_child(*this)->rollout();
-            break;
-        }
-        auto c_node = o_node->select_child(uct_temperature);
-        auto random_colour = c_node->random_colour();
-
-        if (c_node->is_terminal()) {
-            c_node->rollout();
-            break;
-        }
-        c_node->try_init();
-        if (c_node->can_add_child(random_colour)) {
-            c_node->add_random_child(random_colour, *this)->rollout();
-            break;
-        }
-        o_node = c_node->select_child(random_colour, uct_temperature);
-    }
-}
-
 std::shared_ptr<OrderNode> SearchEnvironment::get_order_node(ChaosNode *parent, const ChaosMove &move) {
     auto new_hash = parent->board.get_hash();
     new_hash.decrement();
@@ -333,6 +310,29 @@ void SearchEnvironment::tree_search_chaos(ChaosNode &root, Colour c) {
 
     for (uint i = 0; i < rollouts; ++i) {
         tree_search_helper(root.select_child(c, uct_temperature));
+    }
+}
+
+inline void SearchEnvironment::tree_search_helper(OrderNode *o_node) {
+    while (true) {
+        o_node->try_init();
+        if (o_node->can_add_child()) {
+            o_node->add_random_child(*this)->rollout();
+            break;
+        }
+        auto c_node = o_node->select_child(uct_temperature);
+        auto random_colour = c_node->random_colour();
+
+        if (c_node->is_terminal()) {
+            c_node->rollout();
+            break;
+        }
+        c_node->try_init();
+        if (c_node->can_add_child(random_colour)) {
+            c_node->add_random_child(random_colour, *this)->rollout();
+            break;
+        }
+        o_node = c_node->select_child(random_colour, uct_temperature);
     }
 }
 
